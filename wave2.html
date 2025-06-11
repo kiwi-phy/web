@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模擬水波的干涉</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif, 'Microsoft JhengHei', '微軟正黑體'; /* Added Chinese font */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding: 1rem; /* Reverted body padding to a common value */
+        }
+        canvas {
+            border-radius: 0.75rem; /* rounded-xl */
+            background-color: #e0f2f7; /* Slightly deeper light blue background for water */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #06b6d4; /* cyan-500 */
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background .15s ease-in-out;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #06b6d4; /* cyan-500 */
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background .15s ease-in-out;
+        }
+        input[type="range"]::-webkit-slider-thumb:active,
+        input[type="range"]::-moz-range-thumb:active {
+            background: #0e7490; /* cyan-700 */
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #a5f3fc; /* cyan-200 */
+            border-radius: 4px;
+        }
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #a5f3fc; /* cyan-200 */
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-cyan-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 w-full max-w-5xl flex flex-col gap-6">
+
+        <!-- Simulation Area -->
+        <div class="flex flex-col items-center justify-center bg-white rounded-xl p-4 shadow-inner">
+            <h2 class="text-2xl font-bold mb-4 text-cyan-700">模擬水波的干涉</h2>
+            <canvas id="waveCanvas" class="w-full max-w-4xl aspect-[2/1]"></canvas>
+        </div>
+
+        <!-- Controls Section (removed h3 heading) -->
+        <div class="bg-cyan-50 rounded-xl p-4 shadow-md w-full">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Double Source Gap Slider (always visible) -->
+                <div>
+                    <label for="doubleSourceGap" class="block text-sm font-medium text-gray-700 mb-1">波源間距 (<span id="gapReadout">100</span> px)</label>
+                    <input type="range" id="doubleSourceGap" min="30" max="150" step="1" value="100" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-cyan-200" oninput="document.getElementById('gapReadout').innerText = this.value; resetSimulation()">
+                </div>
+                <!-- Frequency Slider -->
+                <div>
+                    <label for="frequency" class="block text-sm font-medium text-gray-700 mb-1">頻率 (<span id="frequencyReadout">2.0</span> Hz)</label>
+                    <input type="range" id="frequency" min="0.5" max="5.0" step="0.1" value="2.0" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-cyan-200" oninput="document.getElementById('frequencyReadout').innerText = parseFloat(this.value).toFixed(1); resetSimulation()">
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+                <!-- Nodal Line Button -->
+                <button id="toggleNodalLines" class="w-1/2 py-2 px-4 rounded-lg shadow-md font-semibold text-orange-700 bg-orange-100 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    顯示節線
+                </button>
+                <!-- Pause Button -->
+                <button id="pauseButton" class="w-1/2 py-2 px-4 bg-gray-500 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus::ring-gray-400 focus:ring-offset-2 transition ease-in-out duration-150">
+                    暫停
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const waveCanvas = document.getElementById('waveCanvas');
+        const ctx = waveCanvas.getContext('2d');
+
+        const frequencySlider = document.getElementById('frequency');
+        const doubleSourceGapSlider = document.getElementById('doubleSourceGap');
+        const gapReadoutSpan = document.getElementById('gapReadout');
+        const toggleNodalLinesButton = document.getElementById('toggleNodalLines');
+        const pauseButton = document.getElementById('pauseButton');
+
+        // Physics Constants
+        const WAVE_SPEED = 75; // <-- 波速已調整為一半
+        const AMPLITUDE = 2.0; // 波的振幅
+
+        // Simulation Variables
+        let animationFrameId = null;
+        let animationStartTime = null; // The timestamp when the animation actually began or resumed
+        let totalPausedTime = 0; // The cumulative time the animation has been paused
+        let lastPauseStartTime = null; // The timestamp when the animation was last paused
+
+        let waveSources = []; // Always two sources now
+        let currentFrequency = parseFloat(frequencySlider.value);
+
+        let showNodalLines = false; // State for nodal lines display
+        let isPaused = false;       // State for pause/resume
+
+        // Set initial canvas dimensions based on CSS for responsiveness
+        function resizeCanvas() {
+            waveCanvas.width = waveCanvas.offsetWidth;
+            waveCanvas.height = waveCanvas.offsetHeight;
+            resetSimulation(); // Reset simulation to redraw with new dimensions
+        }
+
+        // Initialize canvas sizes and add resize listener
+        window.addEventListener('load', () => {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        });
+
+        function calculateWavePattern(currentTime) { // Accept currentTime as argument
+            const currentWaveLength = WAVE_SPEED / currentFrequency; // 計算波長
+            const k = (2 * Math.PI) / currentWaveLength; // 波數 (angular wave number)
+            const omega = 2 * Math.PI * currentFrequency; // 角頻率 (angular frequency)
+
+            const imageData = ctx.createImageData(waveCanvas.width, waveCanvas.height);
+            const data = imageData.data;
+
+            const S1 = waveSources[0];
+            const S2 = waveSources[1];
+            const sourcePixelGap = Math.sqrt(Math.pow(S1.x - S2.x, 2) + Math.pow(S1.y - S2.y, 2));
+
+            // Nodal line tolerance (how wide the line is in pixels)
+            const nodalLineTolerance = 1.5; // Slightly thinner, more precise line
+
+            // Calculate min/max 'n' for nodal lines: |r1 - r2| = (n + 0.5) * lambda
+            // Path difference ranges from -sourcePixelGap to +sourcePixelGap
+            const max_n_positive = Math.floor(sourcePixelGap / currentWaveLength - 0.5);
+            const min_n_negative = Math.ceil(-sourcePixelGap / currentWaveLength - 0.5);
+
+            for (let y = 0; y < waveCanvas.height; y++) {
+                for (let x = 0; x < waveCanvas.width; x++) {
+                    const r1 = Math.sqrt(Math.pow(x - S1.x, 2) + Math.pow(y - S1.y, 2));
+                    const r2 = Math.sqrt(Math.pow(x - S2.x, 2) + Math.pow(y - S2.y, 2));
+                    const path_difference = r1 - r2; // Path difference for interference
+
+                    // Calculate superposition of waves with damping
+                    let totalAmplitude = 0;
+                    // Apply a small threshold to r1, r2 to prevent division by zero near source and for smoother wave propagation
+                    if (r1 > 1) totalAmplitude += (AMPLITUDE / (1 + r1 / 50)) * Math.sin(k * r1 - omega * currentTime);
+                    if (r2 > 1) totalAmplitude += (AMPLITUDE / (1 + r2 / 50)) * Math.sin(k * r2 - omega * currentTime);
+
+                    let isNodalLine = false;
+                    if (showNodalLines) {
+                        for (let n = min_n_negative; n <= max_n_positive; n++) {
+                            const target_delta_r = (n + 0.5) * currentWaveLength;
+                            // Check if point is close to the theoretical nodal line
+                            if (Math.abs(path_difference - target_delta_r) < nodalLineTolerance) {
+                                isNodalLine = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    const index = (y * waveCanvas.width + x) * 4;
+                    if (isNodalLine) {
+                        data[index + 0] = 255; // Orange R
+                        data[index + 1] = 165; // Orange G
+                        data[index + 2] = 0;   // Orange B
+                        data[index + 3] = 255; // Alpha (Fully opaque)
+                    } else {
+                        // Wave coloring (slightly lighter blue for better visibility on a pale background)
+                        const maxTheoreticalAmplitude = AMPLITUDE * 2; // Max amplitude for two sources
+                        const normalizedAmplitude = (totalAmplitude / maxTheoreticalAmplitude + 1) / 2; // Normalize to 0-1 range
+
+                        // Adjusted RGB values for a slightly lighter but still visible blue range
+                        data[index + 0] = Math.floor(80 + normalizedAmplitude * 80);  // R (range 80-160)
+                        data[index + 1] = Math.floor(160 + normalizedAmplitude * 80); // G (range 160-240)
+                        data[index + 2] = Math.floor(220 + normalizedAmplitude * 35);  // B (range 220-255)
+                        data[index + 3] = 255;
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            // Draw wave sources as circles
+            // waveSources.forEach(source => {
+            //     ctx.beginPath();
+            //     ctx.arc(source.x, source.y, 8, 0, Math.PI * 2);
+            //     ctx.fillStyle = '#ef4444'; // Red circle for source
+            //     ctx.fill();
+            //     ctx.strokeStyle = '#b91c1c'; // Darker red border
+            //     ctx.lineWidth = 2;
+            //     ctx.stroke();
+            // });
+        }
+
+        // Animation Loop
+        function animate(timestamp) {
+            if (!animationStartTime) animationStartTime = timestamp; // Initialize on first call
+
+            if (!isPaused) {
+                // Calculate current time, excluding any paused durations
+                let currentTime = (timestamp - animationStartTime - totalPausedTime) / 1000;
+                calculateWavePattern(currentTime); // Pass calculated time
+            }
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Reset Simulation (called when sliders change or initially)
+        function resetSimulation() {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+            animationStartTime = null; // Reset animation start time
+            totalPausedTime = 0; // Reset total paused time
+            lastPauseStartTime = null; // Clear any pending pause start time
+            isPaused = false;
+            pauseButton.innerText = '暫停';
+
+            currentFrequency = parseFloat(frequencySlider.value);
+            
+            // Source gap is now read directly in pixels
+            const sourcePixelGap = parseFloat(doubleSourceGapSlider.value);
+
+            // Update wave sources to always be two sources, centered horizontally
+            waveSources = [];
+            waveSources.push({ x: waveCanvas.width / 2 - sourcePixelGap / 2, y: waveCanvas.height / 2 });
+            waveSources.push({ x: waveCanvas.width / 2 + sourcePixelGap / 2, y: waveCanvas.height / 2 });
+            
+            startSimulation(); // Restart with new parameters
+        }
+
+        // Start animation (usually called by resetSimulation or togglePause)
+        function startSimulation() {
+            if (animationFrameId) { // If already running, cancel before restarting
+                cancelAnimationFrame(animationFrameId);
+            }
+            // `animationStartTime` will be set by the `animate` function's first call
+            animate(performance.now()); // Pass current timestamp to animate
+        }
+
+        // Toggle Nodal Lines Display
+        function toggleNodalLines() {
+            showNodalLines = !showNodalLines;
+            if (showNodalLines) {
+                toggleNodalLinesButton.textContent = '隱藏節線';
+                toggleNodalLinesButton.classList.remove('bg-orange-100', 'hover:bg-orange-200', 'text-orange-700');
+                toggleNodalLinesButton.classList.add('bg-orange-500', 'hover:bg-orange-600', 'text-white');
+            } else {
+                toggleNodalLinesButton.textContent = '顯示節線';
+                toggleNodalLinesButton.classList.remove('bg-orange-500', 'hover:bg-orange-600', 'text-white');
+                toggleNodalLinesButton.classList.add('bg-orange-100', 'hover:bg-orange-200', 'text-orange-700');
+            }
+            // Force redraw to apply nodal lines change immediately
+            // We pass the current effective time (as if animation continued)
+            if (!isPaused) {
+                // If not paused, a new frame will be requested and calculated with correct time
+            } else {
+                // If paused, we need to manually call calculateWavePattern to redraw with lines
+                // Calculate current "effective" time as if it were running
+                const effectiveTime = (performance.now() - animationStartTime - totalPausedTime) / 1000;
+                calculateWavePattern(effectiveTime);
+            }
+        }
+
+        // Toggle Pause/Resume
+        function togglePause() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+                lastPauseStartTime = performance.now(); // Record when pause started
+                pauseButton.innerText = '繼續';
+            } else {
+                totalPausedTime += (performance.now() - lastPauseStartTime); // Add to total paused time
+                lastPauseStartTime = null; // Clear this as no longer paused
+                pauseButton.innerText = '暫停';
+                startSimulation(); // Ensure animation restarts
+            }
+        }
+
+        // Event Listeners
+        frequencySlider.addEventListener('input', resetSimulation);
+        doubleSourceGapSlider.addEventListener('input', resetSimulation);
+        toggleNodalLinesButton.addEventListener('click', toggleNodalLines);
+        pauseButton.addEventListener('click', togglePause);
+    </script>
+</body>
+</html>
