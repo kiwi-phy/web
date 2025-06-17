@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最終優化版-斜面運動實驗</title>
+    <style>
+        /* --- 整體佈局與風格 --- */
+        body {
+            font-family: 'Helvetica Neue', Arial, 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f0e6d2; color: #333; display: flex; flex-direction: column;
+            align-items: center; padding: 20px; box-sizing: border-box; min-height: 100vh;
+        }
+        h1 {
+            color: #5a4a3a; border-bottom: 2px solid #c7b299; padding-bottom: 10px;
+            margin-top: 0; width: 100%; max-width: 1100px; text-align: center;
+        }
+        .main-container { width: 100%; max-width: 1100px; }
+        .top-section, .bottom-section-wrapper {
+            background-color: #fffaf0; border: 2px solid #c7b299; border-radius: 10px;
+            padding: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px;
+        }
+        .bottom-section { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+        .data-container, .controls-container-wrapper {
+            flex: 1; min-width: 450px;
+        }
+        h2, h3 { text-align: center; margin-top: 0; color: #5a4a3a;}
+
+        /* --- 實驗場景動畫 (Top Section) --- */
+        .experiment-area {
+            position: relative; width: 100%; height: 300px; background-color: #e8e8e8;
+            border-radius: 5px; overflow: hidden; margin-bottom: 20px;
+        }
+        #ground {
+            position: absolute;
+            bottom: 50px; left: 0; width: 100%; height: 0;
+            border-bottom: 2px dashed #888;
+            z-index: 0;
+        }
+        #track {
+            position: absolute; bottom: 50px; left: 5%; width: 90%; height: 20px;
+            background: linear-gradient(to right, #ffffff, #d0d0d0);
+            border: 2px solid #555;
+            transform-origin: left bottom;
+        }
+        #ticker-timer {
+            position: absolute;
+            width: 80px; height: 40px; background-color: #4682B4;
+            border: 2px solid #2a4a6b; border-radius: 5px; right: 0;
+            bottom: 20px; z-index: 6; box-sizing: border-box;
+            color: white; font-size: 12px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 2px; line-height: 1.2;
+        }
+        /* --- MODIFIED: 已移除所有遮罩相關的CSS --- */
+        #cart {
+            position: absolute; bottom: 20px;
+            left: calc(100% - 80px - 90px);
+            width: 80px; height: 40px; background-color: #8fbc8f;
+            border: 2px solid #3a533a; border-radius: 4px;
+            z-index: 5;
+        }
+        #cart::before, #cart::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            width: 16px;
+            height: 16px;
+            background-color: #333;
+            border-radius: 50%;
+            border: 1px solid #555;
+        }
+        #cart::before { left: 10px; }
+        #cart::after { right: 10px; }
+        .paper-tape {
+            position: absolute; width: 2000px; height: 5px; left: 100%;
+            top: 50%; transform: translateY(-50%); z-index: 4; /* 將紙帶放在滑車和計時器之下 */
+            background-color: #fffde4; border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+        .dynamic-dots-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+        /* --- 輸出紙帶紀錄 --- */
+        #output-tape-area { padding: 10px; border: 1px dashed #aaa; border-radius: 5px; }
+        #output-tape {
+            position: relative; width: 100%; height: 30px;
+            background-color: #fffde4; border: 1px solid #ccc;
+        }
+        .tape-dot {
+            position: absolute; width: 4px; height: 4px; background-color: black;
+            border-radius: 50%; top: 50%; transform: translate(-50%, -50%);
+        }
+
+        /* --- 控制項 & 結果顯示 (Bottom) --- */
+        .controls-container-wrapper { display: flex; flex-direction: column; gap: 20px; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .control-group {
+            border: 1px dashed #c7b299; border-radius: 5px; padding: 10px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .control-group label { font-weight: bold; }
+        .controls input[type="range"] { width: 80%; cursor: pointer; }
+        .controls button {
+            width: 80%; padding: 10px 15px; font-size: 1em; font-weight: bold; cursor: pointer;
+            border: 2px solid #8c785d; background-color: #a59178; color: white; border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .controls button:hover:not(:disabled) { background-color: #7a6854; }
+        .controls button:disabled { background-color: #cccccc; border-color: #999999; cursor: not-allowed; }
+        #reset-all-btn { background-color: #c0392b; border-color: #a03024; }
+        #reset-all-btn:hover:not(:disabled) { background-color: #962d22; }
+
+        #results-display {
+            background-color: #fffde4; padding: 10px; border-radius: 5px;
+            border: 1px solid #ccc; min-height: 50px;
+        }
+        #results-display p { margin: 5px 0; font-size: 0.9em; }
+
+        /* --- 數據圖表 (Bottom Left) --- */
+        .data-panel { display: flex; flex-direction: column; gap: 15px; }
+        #graph-container { width: 100%; }
+        #vt-graph { width: 100%; background-color: white; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>斜面運動與數據分析</h1>
+
+    <div class="main-container">
+        <div class="top-section">
+            <div class="experiment-area">
+                <div id="ground"></div>
+                <div id="track">
+                    <div id="ticker-timer">
+                        打點<br>計時器
+                        <!-- MODIFIED: 已移除空白紙帶遮罩 -->
+                    </div>
+                    <div id="cart">
+                        <div class="paper-tape">
+                            <div class="dynamic-dots-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="output-tape-area">
+                <h3>紙帶紀錄</h3>
+                <div id="output-tape"></div>
+            </div>
+        </div>
+
+        <div class="bottom-section">
+            <div class="data-container bottom-section-wrapper">
+                <h2>數據分析區（去除前後的紙帶）</h2>
+                <div class="data-panel">
+                    <div id="graph-container">
+                        <canvas id="vt-graph"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="controls-container-wrapper">
+                <div class="bottom-section-wrapper">
+                    <h2>實驗操作區</h2>
+                    <div class="controls">
+                        <div class="control-group">
+                            <label for="angle-slider">斜面角度: <span id="angle-value">3.0°</span></label>
+                            <input type="range" id="angle-slider" min="2" max="10" value="3" step="0.1">
+                            <button id="start-btn">開始實驗</button>
+                            <button id="reset-all-btn">全部重來</button>
+                        </div>
+                        <div class="control-group">
+                            <label>數據分析</label>
+                            <button id="analyze-tape-btn" disabled>分析紙帶</button>
+                            <button id="analyze-accel-btn" disabled>分析加速度</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bottom-section-wrapper">
+                    <h3>實驗結果</h3>
+                    <div id="results-display"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM 元素 ---
+        const angleSlider = document.getElementById('angle-slider');
+        const angleValue = document.getElementById('angle-value');
+        const startBtn = document.getElementById('start-btn');
+        const resetAllBtn = document.getElementById('reset-all-btn');
+        const analyzeTapeBtn = document.getElementById('analyze-tape-btn');
+        const analyzeAccelBtn = document.getElementById('analyze-accel-btn');
+        
+        const track = document.getElementById('track');
+        const cart = document.getElementById('cart');
+        const dynamicDotsContainer = document.querySelector('.dynamic-dots-container');
+        const outputTape = document.getElementById('output-tape');
+        
+        const canvas = document.getElementById('vt-graph');
+        const ctx = canvas.getContext('2d');
+        const resultsDisplay = document.getElementById('results-display');
+        
+        // --- 物理與動畫參數 ---
+        const G = 9.8;
+        let animationId = null;
+        const M_TO_PX_SCALE = 400;
+        const DOT_INTERVAL_TIME = 0.04; 
+        const DOT_GROUP_SIZE = 5;
+        const TIMER_OFFSET = 90;
+        const IGNORE_DOTS_START = 5;
+        const IGNORE_DOTS_END = 5;
+
+        // --- 狀態管理 ---
+        let experimentRuns = [];
+        let currentRunData = {};
+        const runColors = ['#e63946', '#0077b6', '#fca311', '#52b788', '#9d4edd']; // 紅, 藍, 橘, 綠, 紫
+        let isSimulating = false;
+
+        function setupCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = (rect.width * 0.7) * dpr;
+            ctx.scale(dpr, dpr);
+            redrawAll();
+        }
+
+        function updateUIState() {
+            angleSlider.disabled = isSimulating;
+            startBtn.disabled = isSimulating;
+            const hasEnoughData = currentRunData.dotPositions && (currentRunData.dotPositions.length > IGNORE_DOTS_START + IGNORE_DOTS_END + DOT_GROUP_SIZE);
+            analyzeTapeBtn.disabled = isSimulating || !hasEnoughData || !!currentRunData.displacementBars;
+            analyzeAccelBtn.disabled = isSimulating || !currentRunData.displacementBars || !!currentRunData.acceleration;
+            resetAllBtn.disabled = isSimulating;
+        }
+
+        function updateAngle() {
+            if (isSimulating) return;
+            angleValue.textContent = `${parseFloat(angleSlider.value).toFixed(1)}°`;
+            resetSimulation();
+        }
+
+        function resetSimulation() {
+            if (animationId) cancelAnimationFrame(animationId);
+            isSimulating = false;
+            track.style.transform = `rotate(${-parseFloat(angleSlider.value)}deg)`;
+            cart.style.left = `${track.offsetWidth - cart.offsetWidth - TIMER_OFFSET}px`;
+            outputTape.innerHTML = '';
+            dynamicDotsContainer.innerHTML = '';
+            currentRunData = {};
+            updateUIState();
+        }
+        
+        function resetAll() {
+            experimentRuns = [];
+            resultsDisplay.innerHTML = '';
+            resetSimulation();
+            redrawAll();
+        }
+
+        function startExperiment() {
+            resetSimulation();
+            isSimulating = true;
+            updateUIState();
+            
+            const angleRad = parseFloat(angleSlider.value) * (Math.PI / 180);
+            const acceleration = G * Math.sin(angleRad);
+            currentRunData = { angle: parseFloat(angleSlider.value), color: runColors[experimentRuns.length % runColors.length], dotPositions: [] };
+            
+            let startTime = null, lastDotTime = -DOT_INTERVAL_TIME;
+            const initialPosPx = track.offsetWidth - cart.offsetWidth - TIMER_OFFSET;
+            const maxDistanceM = (track.offsetWidth - TIMER_OFFSET) / M_TO_PX_SCALE;
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsedSimTime = (timestamp - startTime) / 1000;
+                const distanceM = 0.5 * acceleration * elapsedSimTime * elapsedSimTime;
+                
+                if (elapsedSimTime > lastDotTime + DOT_INTERVAL_TIME) {
+                    lastDotTime += DOT_INTERVAL_TIME;
+                    const dotData = { t: lastDotTime, pos: distanceM };
+                    currentRunData.dotPositions.push(dotData);
+                    
+                    const dotPosPx = dotData.pos * M_TO_PX_SCALE;
+                    
+                    const outputDot = document.createElement('div');
+                    outputDot.className = 'tape-dot';
+                    outputDot.style.left = `${(dotPosPx / (maxDistanceM * M_TO_PX_SCALE)) * 100}%`;
+                    outputTape.appendChild(outputDot);
+                    
+                    const cartDot = document.createElement('div');
+                    cartDot.className = 'tape-dot';
+                    cartDot.style.position = 'absolute';
+                    cartDot.style.left = `${dotPosPx}px`; 
+                    dynamicDotsContainer.appendChild(cartDot);
+                }
+
+                if (distanceM < maxDistanceM) {
+                    cart.style.left = `${initialPosPx - (distanceM * M_TO_PX_SCALE)}px`;
+                    animationId = requestAnimationFrame(animate);
+                } else {
+                    cart.style.left = `0px`;
+                    isSimulating = false;
+                    updateUIState();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function analyzeTape() {
+            if (!currentRunData.dotPositions || currentRunData.dotPositions.length < IGNORE_DOTS_START + IGNORE_DOTS_END + DOT_GROUP_SIZE + 1) {
+                return;
+            }
+            
+            currentRunData.displacementBars = [];
+            const startIdx = IGNORE_DOTS_START;
+            const endIdx = currentRunData.dotPositions.length - IGNORE_DOTS_END;
+
+            for (let i = startIdx; i + DOT_GROUP_SIZE < endIdx; i += DOT_GROUP_SIZE) {
+                currentRunData.displacementBars.push({
+                    interval: (i - startIdx) / DOT_GROUP_SIZE,
+                    displacement: (currentRunData.dotPositions[i + DOT_GROUP_SIZE].pos - currentRunData.dotPositions[i].pos) * 100, // cm
+                    startDotIndex: i
+                });
+            }
+            redrawAll();
+            updateUIState();
+        }
+
+        function analyzeAcceleration() {
+            if (!currentRunData.displacementBars || currentRunData.displacementBars.length < 2) return;
+            
+            const bars = currentRunData.displacementBars;
+            const deltaT_total = DOT_GROUP_SIZE * DOT_INTERVAL_TIME;
+            let sumOfDeltaDeltaX = 0;
+            for(let i=0; i < bars.length - 1; i++) {
+                sumOfDeltaDeltaX += (bars[i+1].displacement - bars[i].displacement);
+            }
+            const avg_delta_delta_x = sumOfDeltaDeltaX / (bars.length - 1);
+            currentRunData.acceleration = (avg_delta_delta_x / 100) / (deltaT_total * deltaT_total);
+
+            experimentRuns.push(currentRunData);
+            currentRunData = {};
+            redrawAll();
+            updateResultsDisplay();
+            updateUIState();
+        }
+        
+        let maxInterval = 5, maxDisplacement = 5;
+
+        function updateGraphScale() {
+            maxInterval = 5; maxDisplacement = 5;
+            const allRuns = experimentRuns.concat(currentRunData.displacementBars ? [currentRunData] : []);
+            if (allRuns.length > 0) {
+                allRuns.forEach(run => {
+                    if (run.displacementBars && run.displacementBars.length > 0) {
+                        maxInterval = Math.max(maxInterval, run.displacementBars.length);
+                        maxDisplacement = Math.max(maxDisplacement, ...run.displacementBars.map(b => b.displacement));
+                    }
+                });
+            }
+            maxInterval = Math.max(5, Math.ceil(maxInterval));
+            maxDisplacement = Math.max(5, Math.ceil(maxDisplacement / 5) * 5);
+        }
+
+        function redrawAll() {
+            updateGraphScale();
+            const p = 50; // padding
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+            ctx.clearRect(0, 0, w, h);
+            drawGraphAxis(p, w, h, maxInterval, maxDisplacement);
+            experimentRuns.forEach(run => {
+                drawDisplacementBars(run, p, w, h, maxInterval, maxDisplacement);
+                if (run.acceleration) drawRegressionLine(run, p, w, h, maxInterval, maxDisplacement);
+            });
+            if(currentRunData.displacementBars) drawDisplacementBars(currentRunData, p, w, h, maxInterval, maxDisplacement);
+        }
+        
+        function drawGraphAxis(p, w, h, maxT, maxV) {
+            ctx.strokeStyle = '#888'; ctx.fillStyle = '#333'; ctx.font = '12px Arial'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(p, p); ctx.lineTo(p, h - p); ctx.lineTo(w - p, h - p); ctx.stroke();
+            
+            ctx.save();
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.translate(p - 35, h / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('5間隔位移 (cm)', 0, 0);
+            ctx.restore();
+            
+            ctx.textAlign = "center"; ctx.textBaseline = "top";
+            ctx.fillText('時間間隔 (每' + DOT_GROUP_SIZE + '格)', w / 2, h - p + 25);
+            
+            ctx.textAlign = "right"; ctx.textBaseline = "middle";
+            let step = 5;
+            if (maxV > 50) step = 10;
+            if (maxV > 100) step = 20;
+            for (let v = step; v <= maxV; v += step) {
+                const y = h - p - (h - 2*p) * (v / maxV);
+                ctx.moveTo(p, y); ctx.lineTo(p - 5, y); ctx.fillText(v, p - 8, y);
+            }
+
+            ctx.textAlign = "center"; ctx.textBaseline = "top";
+            const totalBarWidth = (w - 2 * p) / maxT;
+            ctx.beginPath();
+            for(let i = 0; i < maxT; i++) {
+                const labelX = p + totalBarWidth * (i + 0.5);
+                ctx.fillText(i + 1, labelX, h - p + 8);
+                const tickX = p + totalBarWidth * (i + 1);
+                ctx.moveTo(tickX, h - p); ctx.lineTo(tickX, h - p + 5);
+            }
+            ctx.moveTo(p, h-p); ctx.lineTo(p, h-p+5);
+            ctx.stroke();
+        }
+
+        function drawDisplacementBars(run, p, w, h, maxInt, maxDisp) {
+            const totalBarWidth = (w - 2 * p) / maxInt;
+            const barWidth = totalBarWidth * 0.6;
+            
+            run.displacementBars.forEach(bar => {
+                const barHeight = (h - 2 * p) * (bar.displacement / maxDisp);
+                const x = p + totalBarWidth * bar.interval + (totalBarWidth * 0.2);
+                const y = h - p - barHeight;
+                
+                ctx.fillStyle = '#fffde4';
+                ctx.strokeStyle = run.color;
+                ctx.lineWidth = 1.5;
+                ctx.fillRect(x, y, barWidth, barHeight);
+                ctx.strokeRect(x, y, barWidth, barHeight);
+
+                const startDotM = run.dotPositions[bar.startDotIndex].pos;
+                ctx.fillStyle = 'black';
+                for (let j = 0; j <= DOT_GROUP_SIZE; j++) {
+                    if(bar.startDotIndex + j < run.dotPositions.length) {
+                        const dotM = run.dotPositions[bar.startDotIndex + j].pos;
+                        const relativePosM = dotM - startDotM;
+                        const dotY = y + barHeight * (relativePosM / (bar.displacement/100));
+                        ctx.beginPath();
+                        ctx.arc(x + barWidth / 2, dotY, 1.5, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                }
+            });
+            ctx.lineWidth = 1;
+        }
+        
+        function drawRegressionLine(run, p, w, h, maxInt, maxDisp) {
+            if(run.displacementBars.length < 2) return;
+            const deltaT_total = DOT_GROUP_SIZE * DOT_INTERVAL_TIME;
+            const delta_delta_x = (run.acceleration * 100) * (deltaT_total * deltaT_total);
+            const first_bar_disp = run.displacementBars[0].displacement;
+            
+            ctx.strokeStyle = run.color;
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            
+            const totalBarWidth = (w - 2 * p) / maxInt;
+            for(let i=0; i < run.displacementBars.length; i++) {
+                const expected_disp = first_bar_disp + i * delta_delta_x;
+                const barHeight = (h - 2 * p) * (expected_disp / maxDisp);
+                const x = p + totalBarWidth * i + totalBarWidth/2;
+                const y = h - p - barHeight;
+                if(i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        function updateResultsDisplay() { 
+            resultsDisplay.innerHTML = '';
+            experimentRuns.forEach((run, index) => {
+                const theoretical_a = G * Math.sin(run.angle * Math.PI / 180);
+                const p = document.createElement('p');
+                p.style.color = run.color;
+                p.innerHTML = `<b>實驗 ${index + 1}:</b> 角度 = ${run.angle.toFixed(1)}°, 實驗 a = <b>${run.acceleration.toFixed(2)}</b> m/s², 理論 a = ${theoretical_a.toFixed(2)} m/s²`;
+                resultsDisplay.appendChild(p);
+            });
+        }
+        
+        // --- Event Listeners & Initial Setup ---
+        angleSlider.addEventListener('input', updateAngle);
+        startBtn.addEventListener('click', startExperiment);
+        resetAllBtn.addEventListener('click', resetAll);
+        analyzeTapeBtn.addEventListener('click', analyzeTape);
+        analyzeAccelBtn.addEventListener('click', analyzeAcceleration);
+        window.addEventListener('resize', setupCanvas);
+        setupCanvas();
+        updateAngle();
+    });
+    </script>
+</body>
+</html>
