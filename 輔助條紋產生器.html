@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>鑑別度實驗輔助條紋 v2</title>
+
+    <style>
+        /* CSS 變數，方便統一管理顏色 */
+        :root {
+            --bg-deep-dark: #1a1f2c;
+            --bg-dark: #2a3140;
+            --text-primary: #e0e6f0;
+            --text-secondary: #a0a8b8;
+            --accent-color: #00aaff;
+            --border-color: #40485a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            background-color: var(--bg-deep-dark);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 15px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--bg-dark);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-primary);
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+
+        fieldset {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        legend {
+            font-weight: bold;
+            color: var(--text-secondary);
+            padding: 0 10px;
+        }
+
+        /* 1. 顏色選擇器 */
+        .color-selector {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 15px;
+        }
+        .color-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+            padding: 0;
+        }
+        .color-btn.selected {
+            border-color: var(--accent-color);
+        }
+        #color-info {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            min-height: 1.2em;
+        }
+        #color-info span {
+            color: var(--text-primary);
+            font-weight: bold;
+        }
+
+        /* 2. 校正尺 */
+        #ruler-container {
+            padding: 10px 0;
+        }
+        #ruler {
+            width: 200px; /* JS 控制 */
+            height: 20px;
+            background: linear-gradient(to right, var(--text-secondary) 1px, transparent 1px);
+            /* 總長度為 5.4 個單位，所以每一格是 100 / 5.4 % */
+            background-size: calc(100% / 5.4) 100%;
+            border: 1px solid var(--text-secondary);
+            border-left-width: 2px;
+            border-right-width: 2px;
+            position: relative;
+            box-sizing: content-box;
+            margin: 0 auto 20px; /* 增加與按鈕的間距 */
+        }
+        #ruler span {
+            position: absolute;
+            top: 25px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transform: translateX(-50%);
+        }
+        /* 定位刻度標籤 */
+        #ruler span:nth-child(1) { left: 0; }
+        #ruler span:nth-child(2) { left: calc(100% / 5.4 * 1); }
+        #ruler span:nth-child(3) { left: calc(100% / 5.4 * 2); }
+        #ruler span:nth-child(4) { left: calc(100% / 5.4 * 3); }
+        #ruler span:nth-child(5) { left: calc(100% / 5.4 * 4); }
+        #ruler span:nth-child(6) { left: calc(100% / 5.4 * 5); }
+        #ruler span:nth-child(7) { left: 100%; }
+
+        .calibration-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .calibration-controls button {
+            font-size: 24px;
+            line-height: 1;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        .calibration-controls span {
+            color: var(--text-secondary);
+        }
+
+        /* 3. 條紋顯示區 */
+        #stripe-container {
+            width: 100%;
+            height: 35vh;
+            min-height: 200px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        /* 4. 調整與計算 */
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .slider-group label {
+            color: var(--text-secondary);
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #result-display {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        #pattern-wavelength {
+            font-weight: bold;
+            color: var(--accent-color);
+            font-size: 20px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <h1>輔助條紋產生器</h1>
+
+        <fieldset>
+            <legend>1. 選擇顏色</legend>
+            <div class="color-selector">
+                <button class="color-btn" data-color="#FF0000" data-name="紅色" data-wavelength="600" style="background-color: #FF0000;"></button>
+                <button class="color-btn" data-color="#00FF00" data-name="綠色" data-wavelength="550" style="background-color: #00FF00;"></button>
+                <button class="color-btn" data-color="#0000FF" data-name="藍色" data-wavelength="450" style="background-color: #0000FF;"></button>
+            </div>
+            <div id="color-info"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>2. 螢幕校正 (5.4 cm)</legend>
+            <div id="ruler-container">
+                <div id="ruler">
+                    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>5.4cm</span>
+                </div>
+            </div>
+            <div class="calibration-controls">
+                <button id="calibrate-minus">-</button>
+                <span>調整寬度</span>
+                <button id="calibrate-plus">+</button>
+            </div>
+        </fieldset>
+        
+        <div id="stripe-container"></div>
+
+        <fieldset>
+            <legend>3. 調整與結果</legend>
+            <div class="slider-group">
+                <label for="width-slider">條紋間距 (像素)</label>
+                <input type="range" id="width-slider" min="1" max="14" value="4" step="1">
+            </div>
+            <div id="result-display">
+                條紋週期 (兩黑條紋中心間距):
+                <div id="pattern-wavelength">...</div>
+            </div>
+        </fieldset>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const colorButtons = document.querySelectorAll('.color-btn');
+            const colorInfo = document.getElementById('color-info');
+            const stripeContainer = document.getElementById('stripe-container');
+            const widthSlider = document.getElementById('width-slider');
+            const wavelengthDisplay = document.getElementById('pattern-wavelength');
+            const ruler = document.getElementById('ruler');
+            const calibratePlusBtn = document.getElementById('calibrate-plus');
+            const calibrateMinusBtn = document.getElementById('calibrate-minus');
+
+            let selectedColor = '#FF0000';
+            let stripeWidthPx = parseInt(widthSlider.value, 10);
+            
+            // 校正尺的實際長度是 5.4 公分 = 54 毫米
+            const RULER_LENGTH_MM = 54;
+            let rulerWidthPx = 200; 
+            let pixelsPerMm = rulerWidthPx / RULER_LENGTH_MM; 
+
+            function updateStripes() {
+                const patternPeriodPx = stripeWidthPx * 2;
+                const gradient = `repeating-linear-gradient(
+                    to right,
+                    ${selectedColor} 0,
+                    ${selectedColor} ${stripeWidthPx}px,
+                    black ${stripeWidthPx}px,
+                    black ${patternPeriodPx}px
+                )`;
+                stripeContainer.style.background = gradient;
+            }
+
+            function updateCalculation() {
+                const patternPeriodPx = stripeWidthPx * 2;
+                const patternWavelengthMm = patternPeriodPx / pixelsPerMm;
+                wavelengthDisplay.textContent = `${patternWavelengthMm.toFixed(3)} mm`;
+            }
+
+            function updateRuler() {
+                ruler.style.width = `${rulerWidthPx}px`;
+                pixelsPerMm = rulerWidthPx / RULER_LENGTH_MM;
+                updateCalculation();
+            }
+            
+            function selectColor(button) {
+                // 更新狀態
+                selectedColor = button.dataset.color;
+                
+                // 更新 UI
+                colorButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+                colorInfo.innerHTML = `已選擇: <span>${button.dataset.name} (≈ ${button.dataset.wavelength} nm)</span>`;
+
+                // 更新條紋
+                updateStripes();
+            }
+
+            // --- 事件監聽器 ---
+
+            colorButtons.forEach(button => {
+                button.addEventListener('click', () => selectColor(button));
+            });
+
+            widthSlider.addEventListener('input', (event) => {
+                stripeWidthPx = parseInt(event.target.value, 10);
+                updateStripes();
+                updateCalculation();
+            });
+
+            calibratePlusBtn.addEventListener('click', () => {
+                rulerWidthPx++;
+                updateRuler();
+            });
+
+            calibrateMinusBtn.addEventListener('click', () => {
+                if (rulerWidthPx > 50) {
+                    rulerWidthPx--;
+                    updateRuler();
+                }
+            });
+
+            // --- 初始頁面設定 ---
+            selectColor(document.querySelector('.color-btn')); // 預設選中第一個顏色
+            updateRuler();
+            updateStripes();
+            updateCalculation();
+        });
+    </script>
+
+</body>
+</html>
