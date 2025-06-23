@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sony 網頁遙控器</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f0f0f0; margin: 0; }
+        .remote-container { max-width: 320px; width: 100%; padding: 20px; background-color: #333; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .settings { margin-bottom: 20px; color: white; }
+        .settings input { width: calc(100% - 10px); padding: 5px; margin-top: 5px; border-radius: 5px; border: 1px solid #555; background-color: #444; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .button { background-color: #555; color: white; border: none; padding: 20px 10px; border-radius: 10px; font-size: 16px; cursor: pointer; transition: background-color 0.2s; text-align: center; }
+        .button:active { background-color: #777; }
+        .power { background-color: #d9534f; }
+        .power:active { background-color: #c9302c; }
+        .wide { grid-column: span 3; }
+        .home { background-color: #428bca; }
+    </style>
+</head>
+<body>
+
+<div class="remote-container">
+    <div class="settings">
+        <label for="tv-ip">電視 IP 位址:</label>
+        <input type="text" id="tv-ip" value="192.168.0.105">
+        <label for="tv-psk">預共用金鑰 (PSK):</label>
+        <input type="text" id="tv-psk" value="sony">
+    </div>
+
+    <div class="grid">
+        <button class="button power" onclick="sendCommand('AAAAAQAAAAEAAAAvAw==')">電源開關</button>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAABgAw==')">輸入來源</button>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAAAJAw==')">靜音</button>
+        
+        <div></div>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAAASAw==')">音量 +</button>
+        <div></div>
+
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAAB1Aw==')">頻道 +</button>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAAATAw==')">音量 -</button>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAAB0Aw==')">頻道 -</button>
+        
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAABpAw==')">↑</button>
+        <button class="button home wide" onclick="sendCommand('AAAAAQAAAAEAAABgAw==')">主選單</button>
+        
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAABoAw==')">←</button>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAAApAw==')">確認</button>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAABiAw==')">→</button>
+        
+        <button class="button wide" onclick="sendCommand('AAAAAQAAAAEAAABjAw==')">返回</button>
+        <button class="button" onclick="sendCommand('AAAAAQAAAAEAAABqAw==')">↓</button>
+    </div>
+</div>
+
+<script>
+    function sendCommand(commandCode) {
+        const tvIp = document.getElementById('tv-ip').value;
+        const psk = document.getElementById('tv-psk').value;
+
+        if (!tvIp || !psk) {
+            alert('請先輸入電視的 IP 位址和預共用金鑰 (PSK)！');
+            return;
+        }
+
+        const url = `http://${tvIp}/sony/ircc`;
+        const body = `<?xml version="1.0"?>
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+  <s:Body>
+    <u:X_SendIRCC xmlns:u="urn:schemas-sony-com:service:IRCC:1">
+      <IRCCCode>${commandCode}</IRCCCode>
+    </u:X_SendIRCC>
+  </s:Body>
+</s:Envelope>`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/xml; charset=UTF-8',
+                'SOAPACTION': '"urn:schemas-sony-com:service:IRCC:1#X_SendIRCC"',
+                'X-Auth-PSK': psk
+            },
+            body: body
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error('指令發送失敗:', response.status, response.statusText);
+                alert('指令發送失敗！請檢查 IP、PSK 是否正確，以及電視是否已開機並在同一個 Wi-Fi 網路下。');
+            } else {
+                console.log('指令成功發送:', commandCode);
+            }
+        })
+        .catch(error => {
+            console.error('網路錯誤:', error);
+            alert('網路錯誤！無法連接到電視。請檢查 IP 位址是否正確，以及您的設備是否和電視在同一個 Wi-Fi 網路中。');
+        });
+    }
+</script>
+
+</body>
+</html>
