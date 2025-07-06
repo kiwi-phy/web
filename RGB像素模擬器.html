@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB 像素觀察模擬 (緊湊版)</title>
+    <style>
+        :root {
+            /* 暗色系顏色變數 */
+            --bg-color: #1e1e1e;
+            --container-bg: #2d2d30;
+            --control-bg: #252526;
+            --text-color: #cccccc;
+            --header-color: #9cdcfe;
+            --accent-color: #007acc;
+            --border-color: #3e3e42;
+            --grid-bg: #111111;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        h1 {
+            color: var(--header-color);
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 300;
+        }
+
+        h2 {
+            color: var(--text-color);
+            margin: 0 0 15px 0;
+            padding-bottom: 8px;
+            font-size: 1.2em;
+            font-weight: 400;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* 新增：用於將兩個控制區塊放在同一行的容器 */
+        .controls-wrapper {
+            display: flex;
+            gap: 15px;
+            align-items: stretch; /* 讓兩個區塊等高 */
+        }
+        
+        .color-picker {
+            flex: 2; /* 佔用較大空間 */
+        }
+
+        .current-color-display {
+            flex: 1; /* 佔用較小空間 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 讓內容垂直居中 */
+        }
+        
+        .color-picker,
+        .current-color-display {
+            background-color: var(--control-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: var(--text-color);
+            font-size: 0.9em;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            appearance: none;
+            height: 10px;
+            border-radius: 5px;
+            outline: none;
+            background-color: #3e3e42;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #f0f0f0;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: #f0f0f0;
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #hue-slider {
+            background: linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red);
+        }
+        
+        #lightness-slider {
+            background: linear-gradient(to right, black, #333, white);
+        }
+
+        .color-box {
+            width: 80px; /* 縮小尺寸以適應新版面 */
+            height: 80px;
+            border-radius: 5px;
+            margin: 0 auto 10px auto;
+            border: 1px solid var(--border-color);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #rgb-value {
+            font-weight: bold;
+            color: var(--header-color);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            word-wrap: break-word; /* 避免文字溢出 */
+        }
+
+        .pixel-simulation {
+            background-color: var(--control-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .pixel-grid-container {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+            background-color: var(--grid-bg);
+            display: flex;
+            border-radius: 4px;
+        }
+
+        #pixel-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+        }
+
+        .pixel-cell {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .sub-pixel {
+            width: 30%;
+            height: 80%;
+            border-radius: 20%;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>RGB 像素模擬器</h1>
+        
+        <div class="controls-wrapper">
+            <div class="color-picker">
+                <h2>選擇顏色</h2>
+                <div class="slider-container">
+                    <label for="hue-slider">色相 (Hue):</label>
+                    <input type="range" id="hue-slider" min="0" max="360" value="0">
+                </div>
+                <div class="slider-container">
+                    <label for="lightness-slider">亮度 (Lightness):</label>
+                    <input type="range" id="lightness-slider" min="0" max="100" value="50">
+                </div>
+            </div>
+
+            <div class="current-color-display">
+                <h2>預覽</h2>
+                <div id="color-preview" class="color-box"></div>
+                <p id="rgb-value">rgb(255,0,0)</p>
+            </div>
+        </div>
+
+        <div class="pixel-simulation">
+            <h2>像素模擬 (10x10)</h2>
+            <div class="pixel-grid-container">
+                <div id="pixel-grid">
+                    <!-- 像素點將由 JavaScript 動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const hueSlider = document.getElementById('hue-slider');
+        const lightnessSlider = document.getElementById('lightness-slider');
+        const colorPreview = document.getElementById('color-preview');
+        const rgbValueSpan = document.getElementById('rgb-value');
+        const pixelGrid = document.getElementById('pixel-grid');
+
+        const RESOLUTION = 10;
+        let currentHue = 0;
+        let currentLightness = 50;
+        
+        function hslToRgb(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(color * 255);
+            };
+            return [f(0), f(8), f(4)];
+        }
+
+        function updateColorDisplay() {
+            const rgb = hslToRgb(currentHue, 100, currentLightness);
+            const rgbString = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+            colorPreview.style.backgroundColor = rgbString;
+            rgbValueSpan.textContent = rgbString;
+        }
+
+        function generatePixelGrid() {
+            pixelGrid.innerHTML = '';
+            pixelGrid.style.gridTemplateColumns = `repeat(${RESOLUTION}, 1fr)`;
+            pixelGrid.style.gridTemplateRows = `repeat(${RESOLUTION}, 1fr)`;
+            pixelGrid.style.gap = `2px`;
+
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < RESOLUTION * RESOLUTION; i++) {
+                const pixelCell = document.createElement('div');
+                pixelCell.classList.add('pixel-cell');
+                
+                const subPixelR = document.createElement('div');
+                subPixelR.classList.add('sub-pixel');
+                const subPixelG = document.createElement('div');
+                subPixelG.classList.add('sub-pixel');
+                const subPixelB = document.createElement('div');
+                subPixelB.classList.add('sub-pixel');
+
+                pixelCell.appendChild(subPixelR);
+                pixelCell.appendChild(subPixelG);
+                pixelCell.appendChild(subPixelB);
+                fragment.appendChild(pixelCell);
+            }
+            pixelGrid.appendChild(fragment);
+        }
+
+        function updatePixelColors() {
+            const [r, g, b] = hslToRgb(currentHue, 100, currentLightness);
+            const pixelCells = pixelGrid.children;
+            for(let i=0; i < pixelCells.length; i++){
+                const subPixels = pixelCells[i].children;
+                subPixels[0].style.backgroundColor = `rgb(${r}, 0, 0)`;
+                subPixels[1].style.backgroundColor = `rgb(0, ${g}, 0)`;
+                subPixels[2].style.backgroundColor = `rgb(0, 0, ${b})`;
+            }
+        }
+
+        function handleColorChange() {
+            updateColorDisplay();
+            updatePixelColors();
+        }
+
+        hueSlider.addEventListener('input', (e) => {
+            currentHue = parseInt(e.target.value);
+            handleColorChange();
+        });
+
+        lightnessSlider.addEventListener('input', (e) => {
+            currentLightness = parseInt(e.target.value);
+            handleColorChange();
+        });
+
+        function init() {
+            generatePixelGrid();
+            handleColorChange();
+        }
+
+        init();
+    </script>
+
+</body>
+</html>
