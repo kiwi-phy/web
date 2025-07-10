@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電流磁效應示範實驗</title>
+    <style>
+        body { margin: 0; padding: 20px; background-color: #e9eef2; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+        .container { width: 100%; max-width: 1280px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #d1d9e6; }
+        .header { background: linear-gradient(135deg, #34495e, #2c3e50); color: white; padding: 15px 25px; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.8em; }
+        .header p { margin: 5px 0 0; color: #bdc3c7; font-size: 0.9em; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Left is 2/3, Right is 1/3 */
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .view-panel {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dde1e2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dde1e2;
+            background-color: #f9fafb;
+        }
+        
+        /* MODIFIED: Reduced margin for alignment */
+        .panel h3, .view-panel h3 { color: #2c3e50; margin-top: 0; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-bottom: 15px; font-size: 1.1em; }
+
+        /* MODIFIED: Reduced margin for alignment */
+        .control-group { display: flex; align-items: center; margin-bottom: 12px; }
+        .control-group label { width: 90px; font-weight: bold; color: #34495e; flex-shrink: 0; font-size: 0.9em;}
+        .slider { flex-grow: 1; margin: 0 10px; -webkit-appearance: none; background: #d7dbdf; height: 8px; border-radius: 4px; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        .slider::-moz-range-thumb { width: 20px; height: 20px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        .value-display { width: 70px; text-align: center; font-weight: bold; color: #c0392b; background-color: #fff; padding: 5px 8px; border-radius: 5px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        
+        #currentSlider::-webkit-slider-thumb { background: #e67e22; }
+        #currentSlider::-moz-range-thumb { background: #e67e22; }
+
+        #mainCanvas, #topViewCanvas {
+            border-radius: 8px;
+            background-color: #ffffff;
+            width: 100%;
+            height: auto;
+            border: 2px solid #34495e;
+        }
+        #topViewCanvas { aspect-ratio: 1 / 1; }
+        #mainCanvas { aspect-ratio: 800 / 600; }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>電流磁效應示範實驗</h1>
+            <p>觀察載流長直導線周圍磁場與地磁的疊加效應</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Left Column: Main 3D View -->
+            <div class="view-panel">
+                <h3>立體圖</h3>
+                <canvas id="mainCanvas"></canvas>
+            </div>
+
+            <!-- Right Column: Controls and Top View -->
+            <div class="sidebar">
+                <div class="panel">
+                    <h3>控制面板</h3>
+                    <div class="control-group">
+                        <label for="currentSlider">電流大小 (I):</label>
+                        <input type="range" id="currentSlider" class="slider" min="-5" max="5" value="0" step="0.1">
+                        <span class="value-display" id="currentValue">0.00 A</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="zoomSlider">拉近/拉遠:</label>
+                        <input type="range" id="zoomSlider" class="slider" min="0.5" max="2.0" value="0.85" step="0.01"> 
+                        <span class="value-display" id="zoomValue">0.85x</span>
+                    </div>
+                     <div class="control-group">
+                        <label for="tiltSlider">垂直視角:</label>
+                        <!-- MODIFIED: Initial value set to 30 -->
+                        <input type="range" id="tiltSlider" class="slider" min="10" max="40" value="30" step="1">
+                        <span class="value-display" id="tiltValue">30°</span>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3>俯視圖 </h3>
+                    <canvas id="topViewCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mainCanvas = document.getElementById('mainCanvas');
+        const mainCtx = mainCanvas.getContext('2d');
+        const topViewCanvas = document.getElementById('topViewCanvas');
+        const topCtx = topViewCanvas.getContext('2d');
+
+        mainCanvas.width = 800; mainCanvas.height = 600;
+        topViewCanvas.width = 400; topViewCanvas.height = 400;
+
+        const ui = {
+            currentSlider: document.getElementById('currentSlider'),
+            currentValue: document.getElementById('currentValue'),
+            zoomSlider: document.getElementById('zoomSlider'),
+            zoomValue: document.getElementById('zoomValue'),
+            tiltSlider: document.getElementById('tiltSlider'),
+            tiltValue: document.getElementById('tiltValue'),
+        };
+        const WIRE_COLOR = '#e67e22';
+
+        const MU0 = (4 * Math.PI * 1e-7) * 8; 
+        let I = 0;
+        const N_GRID = 14;
+        const L = 1.0;
+        const SPACING = L / (N_GRID - 1);
+        const NEEDLE_LEN = 0.06;
+        const Z_OFFSET = 0;
+        const B_EARTH = { x: 0, y: 2e-5, z: 0 }; 
+
+        let zoomFactor = 0.85; 
+        // MODIFIED: Initial value set to 30
+        let tiltAngle = 30;
+        const scene = { fov: 40 };
+        
+        const needles = [];
+        for (let i = 0; i < N_GRID; i++) {
+            for (let j = 0; j < N_GRID; j++) {
+                const x = -L / 2 + i * SPACING;
+                const y = -L / 2 + j * SPACING;
+                if (Math.abs(x) < 1e-6 && Math.abs(y) < 1e-6) continue;
+
+                needles.push({
+                    pos: { x, y, z: Z_OFFSET },
+                    dir: { x: 0, y: 1, z: 0 },
+                    opacity: 1.0
+                });
+            }
+        }
+        
+        const vec = {
+            mag: v => Math.sqrt(v.x**2 + v.y**2 + v.z**2),
+            norm: v => {
+                const m = vec.mag(v);
+                return m < 1e-9 ? {x:0, y:0, z:0} : {x: v.x/m, y: v.y/m, z: v.z/m};
+            },
+            add: (v1, v2) => ({x: v1.x + v2.x, y: v1.y + v2.y, z: v1.z + v2.z}),
+            subtract: (v1, v2) => ({x: v1.x - v2.x, y: v1.y - v2.y, z: v1.z - v2.z}),
+            scale: (v, s) => ({x: v.x * s, y: v.y * s, z: v.z * s}),
+            dot: (v1, v2) => v1.x*v2.x + v1.y*v2.y + v1.z*v2.z,
+            cross: (a, b) => ({x: a.y*b.z - a.z*b.y, y: a.z*b.x - a.x*b.z, z: a.x*b.y - a.y*b.x})
+        };
+
+        function calculateTotalB(pos, current) {
+            const r_vec = { x: pos.x, y: pos.y, z: 0 };
+            const r = vec.mag(r_vec);
+            if (r < 1e-6) return B_EARTH;
+
+            const phi_hat = vec.norm(vec.cross({x:0, y:0, z:1}, r_vec)); 
+            const B_wire_mag = MU0 * current / (2 * Math.PI * r);
+            const B_wire = vec.scale(phi_hat, B_wire_mag);
+
+            return vec.add(B_EARTH, B_wire);
+        }
+
+        let viewMatrix = new Float32Array(16);
+
+        function lookAt(eye, center, up) {
+            const z = vec.norm(vec.subtract(eye, center));
+            const x = vec.norm(vec.cross(up, z));
+            const y = vec.norm(vec.cross(z, x));
+
+            viewMatrix.set([
+                x.x, y.x, z.x, 0,
+                x.y, y.y, z.y, 0,
+                x.z, y.z, z.z, 0,
+                -vec.dot(x, eye), -vec.dot(y, eye), -vec.dot(z, eye), 1
+            ]);
+        }
+
+        function project(p3d) {
+            const x_cam = p3d.x * viewMatrix[0] + p3d.y * viewMatrix[4] + p3d.z * viewMatrix[8] + viewMatrix[12];
+            const y_cam = p3d.x * viewMatrix[1] + p3d.y * viewMatrix[5] + p3d.z * viewMatrix[9] + viewMatrix[13];
+            const z_cam = p3d.x * viewMatrix[2] + p3d.y * viewMatrix[6] + p3d.z * viewMatrix[10] + viewMatrix[14];
+
+            const fovFactor = mainCanvas.height / 2 / Math.tan(scene.fov * Math.PI / 180 / 2);
+            const scale = z_cam !== 0 ? fovFactor / -z_cam : 1; 
+            
+            return {
+                x: mainCanvas.width / 2 + x_cam * scale,
+                y: mainCanvas.height / 2 - y_cam * scale,
+                scale: Math.abs(scale),
+                z: z_cam 
+            };
+        }
+
+        function drawTable() {
+            const tableSize = L * 1.1;
+            const corners = [
+                {x: -tableSize/2, y: -tableSize/2, z: Z_OFFSET},
+                {x: tableSize/2, y: -tableSize/2, z: Z_OFFSET},
+                {x: tableSize/2, y: tableSize/2, z: Z_OFFSET}, 
+                {x: -tableSize/2, y: tableSize/2, z: Z_OFFSET}
+            ];
+            
+            const projectedCorners = corners.map(p => project(p));
+
+            mainCtx.beginPath();
+            mainCtx.moveTo(projectedCorners[0].x, projectedCorners[0].y);
+            for (let i = 1; i < projectedCorners.length; i++) {
+                mainCtx.lineTo(projectedCorners[i].x, projectedCorners[i].y);
+            }
+            mainCtx.closePath();
+            
+            mainCtx.fillStyle = 'rgba(80, 80, 80, 0.4)';
+            mainCtx.strokeStyle = 'rgba(40, 40, 40, 0.8)';
+            mainCtx.lineWidth = 1;
+            mainCtx.fill();
+            mainCtx.stroke();
+        }
+
+        function drawWireSegment(p1_3d, p2_3d) {
+            const p1 = project(p1_3d);
+            const p2 = project(p2_3d);
+            const lineWidth = Math.max(2, 0.006 * p1.scale * 2);
+
+            mainCtx.beginPath();
+            mainCtx.moveTo(p1.x, p1.y);
+            mainCtx.lineTo(p2.x, p2.y);
+            mainCtx.strokeStyle = WIRE_COLOR;
+            mainCtx.lineWidth = lineWidth;
+            mainCtx.stroke();
+        }
+
+        function drawRhombusNeedle(needle) {
+            const B = calculateTotalB(needle.pos, I);
+            const targetDir = vec.norm(B);
+
+            needle.dir = vec.norm(vec.add(vec.scale(needle.dir, 0.85), vec.scale(targetDir, 0.15)));
+            
+            const B_mag = vec.mag(B);
+            const ref_B = B_EARTH.y * 10;
+            needle.opacity = Math.min(1.0, 0.15 + (B_mag / ref_B));
+
+            const half_len = NEEDLE_LEN / 2;
+            const half_width = NEEDLE_LEN / 6;
+
+            const up_ref = Math.abs(needle.dir.z) < 0.9 ? {x:0, y:0, z:1} : {x:0, y:1, z:0};
+            const width_vec = vec.norm(vec.cross(needle.dir, up_ref));
+
+            const north_tip = vec.add(needle.pos, vec.scale(needle.dir, half_len));
+            const south_tip = vec.add(needle.pos, vec.scale(needle.dir, -half_len));
+            const side1 = vec.add(needle.pos, vec.scale(width_vec, half_width));
+            const side2 = vec.add(needle.pos, vec.scale(width_vec, -half_width));
+
+            const p_nt = project(north_tip);
+            const p_st = project(south_tip);
+            const p_s1 = project(side1);
+            const p_s2 = project(side2);
+            
+            mainCtx.fillStyle = `rgba(192, 57, 43, ${needle.opacity})`;
+            mainCtx.beginPath();
+            mainCtx.moveTo(p_nt.x, p_nt.y);
+            mainCtx.lineTo(p_s1.x, p_s1.y);
+            mainCtx.lineTo(p_s2.x, p_s2.y);
+            mainCtx.closePath();
+            mainCtx.fill();
+            
+            mainCtx.fillStyle = `rgba(41, 128, 185, ${needle.opacity})`;
+            mainCtx.beginPath();
+            mainCtx.moveTo(p_st.x, p_st.y);
+            mainCtx.lineTo(p_s1.x, p_s1.y);
+            mainCtx.lineTo(p_s2.x, p_s2.y);
+            mainCtx.closePath();
+            mainCtx.fill();
+        }
+
+        function draw3DAnnotations() {
+            mainCtx.fillStyle = '#000000';
+            mainCtx.strokeStyle = '#000000';
+            mainCtx.lineWidth = 2;
+            mainCtx.font = 'bold 16px "Microsoft JhengHei", sans-serif';
+
+            if (Math.abs(I) > 0.01) {
+                const text3D = { x: 0.12, y: 0, z: 0.35 }; 
+                let arrowStart3D = { x: 0.08, y: 0, z: 0.30 };
+                let arrowEnd3D = { x: 0.08, y: 0, z: 0.40 };
+
+                if (I < 0) {
+                    [arrowStart3D, arrowEnd3D] = [arrowEnd3D, arrowStart3D];
+                }
+                const pText = project(text3D);
+                const pStart = project(arrowStart3D);
+                const pEnd = project(arrowEnd3D);
+                
+                mainCtx.textAlign = 'left';
+                mainCtx.textBaseline = 'middle';
+                mainCtx.fillText("電流", pText.x, pText.y);
+
+                mainCtx.beginPath();
+                mainCtx.moveTo(pStart.x, pStart.y);
+                mainCtx.lineTo(pEnd.x, pEnd.y);
+                const angle = Math.atan2(pEnd.y - pStart.y, pEnd.x - pStart.x);
+                const headlen = 8;
+                mainCtx.lineTo(pEnd.x - headlen * Math.cos(angle - Math.PI / 6), pEnd.y - headlen * Math.sin(angle - Math.PI / 6));
+                mainCtx.moveTo(pEnd.x, pEnd.y);
+                mainCtx.lineTo(pEnd.x - headlen * Math.cos(angle + Math.PI / 6), pEnd.y - headlen * Math.sin(angle + Math.PI / 6));
+                mainCtx.stroke();
+            }
+
+            const northText3D = { x: -0.7, y: 0, z: Z_OFFSET };
+            const northArrowStart3D = { x: -0.6, y: -0.075, z: Z_OFFSET };
+            const northArrowEnd3D = { x: -0.6, y: 0.075, z: Z_OFFSET };
+
+            const pNorthText = project(northText3D);
+            const pNorthStart = project(northArrowStart3D);
+            const pNorthEnd = project(northArrowEnd3D);
+
+            mainCtx.textAlign = 'center';
+            mainCtx.textBaseline = 'middle';
+            mainCtx.fillText("北方", pNorthText.x+10, pNorthText.y-5);
+
+            mainCtx.beginPath();
+            mainCtx.moveTo(pNorthStart.x, pNorthStart.y);
+            mainCtx.lineTo(pNorthEnd.x, pNorthEnd.y);
+            const northAngle = Math.atan2(pNorthEnd.y - pNorthStart.y, pNorthEnd.x - pNorthStart.x);
+            const northHeadlen = 8;
+            mainCtx.lineTo(pNorthEnd.x - northHeadlen * Math.cos(northAngle - Math.PI / 6), pNorthEnd.y - northHeadlen * Math.sin(northAngle - Math.PI / 6));
+            mainCtx.moveTo(pNorthEnd.x, pNorthEnd.y);
+            mainCtx.lineTo(pNorthEnd.x - northHeadlen * Math.cos(northAngle + Math.PI / 6), pNorthEnd.y - northHeadlen * Math.sin(northAngle + Math.PI / 6));
+            mainCtx.stroke();
+        }
+
+        function drawTopViewScene() {
+            topCtx.clearRect(0, 0, topViewCanvas.width, topViewCanvas.height);
+            topCtx.fillStyle = '#ffffff';
+            topCtx.fillRect(0, 0, topViewCanvas.width, topViewCanvas.height);
+
+            const scale = topViewCanvas.width / (L * 1.2);
+            const centerX = topViewCanvas.width / 2;
+            const centerY = topViewCanvas.height / 2;
+
+            for (const needle of needles) {
+                 const x1 = centerX + needle.pos.x * scale;
+                const y1 = centerY - needle.pos.y * scale; 
+                const tip_len_2d = (NEEDLE_LEN / 2) * scale * 0.8;
+                
+                const dir_norm = vec.norm({x: needle.dir.x, y: -needle.dir.y, z:0});
+                const width_vec = {x: -dir_norm.y, y: dir_norm.x, z:0};
+                const tip_width = tip_len_2d * 0.4;
+                
+                topCtx.fillStyle = `rgba(192, 57, 43, ${needle.opacity})`;
+                topCtx.beginPath();
+                topCtx.moveTo(x1 + dir_norm.x * tip_len_2d, y1 + dir_norm.y * tip_len_2d);
+                topCtx.lineTo(x1 + width_vec.x * tip_width, y1 + width_vec.y * tip_width);
+                topCtx.lineTo(x1 - width_vec.x * tip_width, y1 - width_vec.y * tip_width);
+                topCtx.closePath();
+                topCtx.fill();
+
+                topCtx.fillStyle = `rgba(41, 128, 185, ${needle.opacity})`;
+                topCtx.beginPath();
+                topCtx.moveTo(x1 - dir_norm.x * tip_len_2d, y1 - dir_norm.y * tip_len_2d);
+                topCtx.lineTo(x1 + width_vec.x * tip_width, y1 + width_vec.y * tip_width);
+                topCtx.lineTo(x1 - width_vec.x * tip_width, y1 - width_vec.y * tip_width);
+                topCtx.closePath();
+                topCtx.fill();
+            }
+
+            const r_symbol = 8; 
+            topCtx.font = `bold 14px sans-serif`;
+            topCtx.textAlign = 'left';
+            topCtx.textBaseline = 'middle';
+
+            if (Math.abs(I) < 0.01) { 
+                topCtx.beginPath();
+                topCtx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+                topCtx.fillStyle = WIRE_COLOR;
+                topCtx.fill();
+            } else {
+                const r_bg = r_symbol + 2; 
+                
+                topCtx.beginPath();
+                topCtx.arc(centerX, centerY, r_bg, 0, 2 * Math.PI);
+                topCtx.fillStyle = WIRE_COLOR;
+                topCtx.fill();
+
+                topCtx.beginPath();
+                topCtx.arc(centerX, centerY, r_symbol, 0, 2 * Math.PI);
+                topCtx.fillStyle = 'white';
+                topCtx.fill();
+                topCtx.strokeStyle = WIRE_COLOR;
+                topCtx.lineWidth = 2;
+                topCtx.stroke();
+
+                if (I > 0) { 
+                    topCtx.beginPath();
+                    topCtx.arc(centerX, centerY, r_symbol / 3, 0, 2 * Math.PI);
+                    topCtx.fillStyle = WIRE_COLOR; 
+                    topCtx.fill();
+                } else {
+                    topCtx.beginPath();
+                    topCtx.moveTo(centerX - r_symbol / 1.5, centerY - r_symbol / 1.5);
+                    topCtx.lineTo(centerX + r_symbol / 1.5, centerY + r_symbol / 1.5);
+                    topCtx.moveTo(centerX + r_symbol / 1.5, centerY - r_symbol / 1.5);
+                    topCtx.lineTo(centerX - r_symbol / 1.5, centerY + r_symbol / 1.5);
+                    topCtx.strokeStyle = WIRE_COLOR; 
+                    topCtx.lineWidth = 2.5; 
+                    topCtx.stroke();
+                }
+                
+                topCtx.fillStyle = '#333';
+                topCtx.fillText("電流", centerX + r_bg + 5, centerY);
+            }
+
+            const northText = "北方 ↑";
+            topCtx.font = `bold 16px Arial`;
+            topCtx.fillStyle = '#333';
+            topCtx.textAlign = 'center';
+            topCtx.textBaseline = 'bottom';
+            topCtx.fillText(northText, centerX, centerY - (L / 2 * scale) - 10); 
+        }
+        
+        function mainLoop() {
+            let currentTiltAngle = tiltAngle;
+            let cameraOffset = { x: 0, y: 0, z: 0 };
+            if (Math.abs(tiltAngle - 90) < 1) {
+                currentTiltAngle = 89.5;
+                cameraOffset = { x: 0.1, y: -0.1, z: 0 }; 
+            }
+
+            const tiltRad = currentTiltAngle * Math.PI / 180;
+            const eye = { 
+                x: 0 + cameraOffset.x, 
+                y: (-2 * zoomFactor * Math.cos(tiltRad)) + cameraOffset.y, 
+                z: (2 * zoomFactor * Math.sin(tiltRad)) + cameraOffset.z
+            };
+            
+            lookAt(eye, {x:0, y:0, z:0}, {x:0, y:0, z:1});
+
+            mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            mainCtx.fillStyle = '#ffffff';
+            mainCtx.fillRect(0, 0, mainCanvas.width, mainCanvas.height);
+            
+            let drawableObjects = [];
+            needles.forEach(n => {
+                drawableObjects.push({ z: project(n.pos).z, draw: () => drawRhombusNeedle(n) });
+            });
+            
+            const table_center = project({x:0, y:0, z:Z_OFFSET});
+            drawableObjects.push({z: table_center.z, draw: drawTable});
+
+            const wireHeight = 1.0;
+            const p_top_3d = {x: 0, y: 0, z: wireHeight/2};
+            const p_bottom_3d = {x: 0, y: 0, z: -wireHeight/2};
+            const p_intersect_3d = {x: 0, y: 0, z: Z_OFFSET};
+            
+            const z_above = project({x:0, y:0, z:wireHeight/4}).z;
+            drawableObjects.push({
+                z: z_above, 
+                draw: () => drawWireSegment(p_top_3d, p_intersect_3d)
+            });
+
+            const z_below = project({x:0, y:0, z:-wireHeight/4}).z;
+            drawableObjects.push({
+                z: z_below, 
+                draw: () => drawWireSegment(p_intersect_3d, p_bottom_3d)
+            });
+            
+            drawableObjects.sort((a,b) => a.z - b.z);
+            drawableObjects.forEach(obj => obj.draw());
+            
+            draw3DAnnotations();
+            drawTopViewScene();
+            
+            ui.currentValue.textContent = `${I.toFixed(2)} A`;
+            ui.zoomValue.textContent = `${zoomFactor.toFixed(2)}x`;
+            ui.tiltValue.textContent = `${tiltAngle}°`;
+
+            requestAnimationFrame(mainLoop);
+        }
+
+        ui.currentSlider.addEventListener('input', (e) => { I = parseFloat(e.target.value); });
+        ui.zoomSlider.addEventListener('input', (e) => { zoomFactor = parseFloat(e.target.value); });
+        ui.tiltSlider.addEventListener('input', (e) => { tiltAngle = parseInt(e.target.value, 10); });
+
+        // Initial update of values
+        ui.currentValue.textContent = `${parseFloat(ui.currentSlider.value).toFixed(2)} A`;
+        ui.zoomValue.textContent = `${parseFloat(ui.zoomSlider.value).toFixed(2)}x`;
+        ui.tiltValue.textContent = `${ui.tiltSlider.value}°`;
+
+        mainLoop();
+    </script>
+</body>
+</html>
