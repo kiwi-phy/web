@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光的干涉實驗模擬</title>
+    <style>
+        body { margin: 0; padding: 20px; background-color: #e1f7fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, 'Microsoft JhengHei', '微軟正黑體'; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 100vh; box-sizing: border-box;}
+        .container { width: 100%; max-width: 1280px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #d1d9e6; }
+        .header { background: linear-gradient(135deg, #34495e, #2c3e50); color: white; padding: 15px 25px; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.8em; }
+        .header p { margin: 5px 0 0; color: #bdc3c7; font-size: 0.9em; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 15px;
+            padding: 15px;
+            align-items: stretch;
+        }
+
+        .view-panel {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dde1e2;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dde1e2;
+            background-color: #f9fafb;
+        }
+        
+        /* MODIFIED: Added a min-height to the control panel to give it more space. */
+        /* This will automatically reduce the height of the plot panel below it. */
+        /* You can change the '230px' value to make it taller or shorter. */
+        .sidebar .panel:first-child {
+            min-height: 230px;
+        }
+        
+        .panel.plot-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel h3, .view-panel h3 { 
+            color: #2c3e50; 
+            margin-top: 0; 
+            border-bottom: 2px solid #3498db; 
+            padding-bottom: 5px; 
+            margin-bottom: 15px; 
+            font-size: 1.1em; 
+        }
+        .panel .plot-header { margin-bottom: 10px; }
+
+        .controls-wrapper { width: 100%; }
+
+        .control-group { display: flex; align-items: center; }
+        
+        .controls-wrapper .control-group:nth-child(1) { margin-bottom: 15px; }
+        .controls-wrapper .control-group:nth-child(2) { margin-bottom: 15px; }
+        .controls-wrapper .control-group:nth-child(3) { margin-bottom: 20px; }
+
+        .control-group label { width: 120px; font-weight: bold; color: #34495e; flex-shrink: 0; font-size: 0.9em;}
+        .slider { width: 150px; margin: 0 10px; -webkit-appearance: none; background: #d7dbdf; height: 8px; border-radius: 4px; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        .slider::-moz-range-thumb { width: 20px; height: 20px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        .value-display { width: 90px; text-align: center; font-weight: bold; color: #c0392b; background-color: #fff; padding: 5px 8px; border-radius: 5px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        
+        .radio-controls { display: flex; gap: 10px; align-items: center; margin-left: 10px; }
+        .radio-controls label { font-size: 0.9em; cursor: pointer; padding-left: 4px; color: #34495e; font-weight: normal; }
+        .radio-controls span { display: flex; align-items: center; }
+        .radio-controls input[type="radio"] { transform: scale(1.2); cursor: pointer; }
+        
+        canvas {
+            border-radius: 8px;
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        #simulationCanvas { 
+            background-color: #ffffff;
+            border: 2px solid #34495e;
+            aspect-ratio: 960 / 650; 
+        }
+        
+        .canvas-wrapper {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+        }
+
+        #intensityCanvas {
+            background-color: #ffffff;
+            aspect-ratio: 800 / 600;
+            max-width: 100%;
+        }
+        
+        footer {
+            padding-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>光的干涉實驗模擬</h1>
+            <p>楊氏雙狹縫干涉實驗</p>
+        </div>
+
+        <div class="main-content">
+            <div class="view-panel">
+                <h3>裝置圖與干涉條紋</h3>
+                <canvas id="simulationCanvas"></canvas>
+            </div>
+
+            <div class="sidebar">
+                <div class="panel">
+                    <h3>控制面板</h3>
+                    <div class="controls-wrapper">
+                        <div class="control-group">
+                            <label for="wavelengthSlider">波長 λ:</label>
+                            <input type="range" id="wavelengthSlider" class="slider" min="400" max="750" value="650" step="1">
+                            <span id="wavelengthValue" class="value-display">650 nm</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="slitSeparationSlider">雙狹縫間距 d:</label>
+                            <input type="range" id="slitSeparationSlider" class="slider" min="2000" max="6000" value="2800" step="10">
+                            <span id="slitSeparationValue" class="value-display">0.28 mm</span>
+                        </div>
+                        <div class="control-group">
+                            <label for="LDistanceSlider">狹縫到屏幕距離 L:</label>
+                            <input type="range" id="LDistanceSlider" class="slider" min="90" max="120" value="100" step="1">
+                            <span id="LDistanceValue" class="value-display">100 cm</span>
+                        </div>
+                        <div class="control-group">
+                            <label>單狹縫繞射效應:</label>
+                            <div class="radio-controls">
+                                <span>
+                                    <input type="radio" id="diffractionIgnore" name="diffractionMode" value="ignore">
+                                    <label for="diffractionIgnore">不考慮</label>
+
+                                    <input type="radio" id="diffractionConsider" name="diffractionMode" value="consider" checked>
+                                    <label for="diffractionConsider">考慮</label>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel plot-container">
+                    <h3 class="plot-header">亮度分佈圖</h3>
+                    <div class="canvas-wrapper">
+                         <canvas id="intensityCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>翰林 | 相信學習 © 2026 超好學學測複習講義</footer>
+
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const intensityCanvas = document.getElementById('intensityCanvas');
+        const intensityCtx = intensityCanvas.getContext('2d');
+
+        const wavelengthSlider = document.getElementById('wavelengthSlider');
+        const slitSeparationSlider = document.getElementById('slitSeparationSlider');
+        const LDistanceSlider = document.getElementById('LDistanceSlider');
+        const wavelengthValue = document.getElementById('wavelengthValue');
+        const slitSeparationValue = document.getElementById('slitSeparationValue');
+        const LDistanceValue = document.getElementById('LDistanceValue');
+        
+        const x_source = 10;
+        const x_filter_plate = 25;
+        const x_single_slit = 45;
+        const x_double_slit = 65; 
+        const x_pattern_display = 115; 
+        
+        const scene = { center_x: 65, range: 65, height: 40 };
+        const plate_thickness = 2;
+        const single_slit_opening = 6;
+        const double_slit_opening_visual = 3;
+
+        let params = { 
+            wavelength_nm: 650, 
+            slit_width_a_nm: 1000, 
+            slit_separation_d_nm: 2800, 
+            L_distance_cm: 100,
+            considerDiffraction: true 
+        };
+
+        const L_CM_MIN = 90, L_CM_MAX = 120, L_VPYTHON_MIN_DIST = 30, L_VPYTHON_MAX_DIST = 42;
+        const L_SLOPE = (L_VPYTHON_MAX_DIST - L_VPYTHON_MIN_DIST) / (L_CM_MAX - L_CM_MIN);
+        const L_INTERCEPT = L_VPYTHON_MIN_DIST - L_SLOPE * L_CM_MIN;
+        function cm_to_vpython_L_units(cm) { return L_SLOPE * cm + L_INTERCEPT; }
+
+        function wavelength_to_rgb(nm) {
+            const gamma = 0.8; let R, G, B;
+            if (nm >= 380 && nm < 440) { R = -(nm - 440) / (440 - 380); G = 0; B = 1; } 
+            else if (nm >= 440 && nm < 490) { R = 0; G = (nm - 440) / (490 - 440); B = 1; } 
+            else if (nm >= 490 && nm < 510) { R = 0; G = 1; B = -(nm - 510) / (510 - 490); } 
+            else if (nm >= 510 && nm < 580) { R = (nm - 510) / (580 - 510); G = 1; B = 0; } 
+            else if (nm >= 580 && nm < 645) { R = 1; G = -(nm - 645) / (645 - 580); B = 0; } 
+            else if (nm >= 645 && nm <= 780) { R = 1; G = 0; B = 0; } 
+            else { R = 0; G = 0; B = 0; }
+            R = Math.pow(R > 0 ? R : 0, gamma) * 255; G = Math.pow(G > 0 ? G : 0, gamma) * 255; B = Math.pow(B > 0 ? B : 0, gamma) * 255;
+            return `rgb(${Math.round(R)}, ${Math.round(G)}, ${Math.round(B)})`;
+        }
+
+        function calculate_intensity(y_pos, L, a_nm, d_nm, lam_nm) {
+            if (L === 0) return 0;
+            const sin_theta = y_pos / L;
+            if (Math.abs(sin_theta) >= 1) { return 0; }
+
+            const beta_arg = (Math.PI * d_nm / lam_nm) * sin_theta; 
+            const cos_val = Math.cos(beta_arg);
+            const interference_term = cos_val**2;
+
+            const brightness_factor = 0.8;
+            if (!params.considerDiffraction) {
+                return interference_term * brightness_factor;
+            }
+            
+            const alpha_arg = (Math.PI * a_nm / lam_nm) * sin_theta;
+            let sinc_val = 1.0; 
+            if (Math.abs(alpha_arg) > 1e-6) { 
+                sinc_val = Math.sin(alpha_arg) / alpha_arg; 
+            }
+            const diffraction_term = sinc_val**2;
+            
+            return diffraction_term * interference_term * brightness_factor;
+        }
+
+        function drawSimulation() {
+            canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight;
+            const view_width = scene.range * 2; const scale = canvas.width / view_width;
+            
+            const vertical_offset_px = -20;
+            const y_center_px = (canvas.height / 2) + vertical_offset_px;
+
+            const transform = (x_world, y_world) => ({ x: (x_world - (scene.center_x - scene.range)) * scale, y: y_center_px - (y_world * scale) });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const { wavelength_nm, slit_separation_d_nm, L_distance_cm } = params;
+            const current_L_distance_vpython = cm_to_vpython_L_units(L_distance_cm);
+            const current_wave_color = wavelength_to_rgb(wavelength_nm);
+            const current_x_screen_plate = x_double_slit + current_L_distance_vpython;
+
+            ctx.font = `${12 * (scale/3.5)}px sans-serif`; ctx.textAlign = 'center'; let p, p1, p2;
+            const label_y_pos = -scene.height / 2 - 8;
+
+            p = transform(x_source, 0);
+            const halo_radius_px = 6 * scale; const source_radius_px = 3 * scale;
+            const gradient = ctx.createRadialGradient(p.x, p.y, source_radius_px, p.x, p.y, halo_radius_px);
+            gradient.addColorStop(0, 'rgba(255, 220, 100, 0.9)'); gradient.addColorStop(0.8, 'rgba(255, 220, 100, 0.5)'); gradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+            ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(p.x, p.y, halo_radius_px, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.arc(p.x, p.y, source_radius_px, 0, 2 * Math.PI); ctx.fill();
+            p = transform(x_source, label_y_pos); ctx.fillStyle = 'black'; ctx.fillText('光源', p.x, p.y-90);
+            
+            ctx.beginPath(); ctx.strokeStyle = '#cccccc'; ctx.setLineDash([5, 5]);
+            p1 = transform(x_source + 5, 0); p2 = transform(x_single_slit, 0); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            ctx.setLineDash([]);
+
+            const plate_h_px = scene.height * scale;
+            p = transform(x_filter_plate, 0); ctx.fillStyle = current_wave_color; ctx.fillRect(p.x - plate_thickness/2*scale, y_center_px - plate_h_px/2, plate_thickness*scale, plate_h_px);
+            p = transform(x_filter_plate, label_y_pos); ctx.fillStyle = 'black'; ctx.fillText('濾光片', p.x, p.y);
+
+            const slit_h_px = single_slit_opening * scale; const part_h_px = (plate_h_px - slit_h_px) / 2;
+            p = transform(x_single_slit, 0); ctx.fillStyle = '#b28766'; ctx.fillRect(p.x - plate_thickness/2*scale, y_center_px-plate_h_px/2, plate_thickness*scale, part_h_px); ctx.fillRect(p.x - plate_thickness/2*scale, y_center_px+slit_h_px/2, plate_thickness*scale, part_h_px);
+            p = transform(x_single_slit, label_y_pos); ctx.fillStyle = 'black'; ctx.fillText('單狹縫', p.x, p.y);
+            
+            ctx.strokeStyle = current_wave_color; ctx.lineWidth = 1; ctx.globalAlpha = 0.7;
+            const wave_radius_increment = wavelength_nm / 330; const angle_range_rad = Math.PI / 3;
+            for (let r = wave_radius_increment; x_single_slit + r <= x_double_slit - 5; r += wave_radius_increment) {
+                p = transform(x_single_slit, 0); ctx.beginPath(); ctx.arc(p.x, p.y, r * scale, -angle_range_rad, angle_range_rad); ctx.stroke();
+            }
+            const phys_d_min = 1000, phys_d_max = 8000; const visual_d_min = double_slit_opening_visual * 2, visual_d_max = scene.height * 0.5;
+            const interp_factor = (slit_separation_d_nm - phys_d_min) / (phys_d_max - phys_d_min); const visual_d = Math.max(double_slit_opening_visual + 0.1, visual_d_min + interp_factor * (visual_d_max - visual_d_min));
+            const slit_top_y = visual_d / 2, slit_bottom_y = -visual_d / 2;
+            for (let r = wave_radius_increment; x_double_slit + r <= current_x_screen_plate - 5; r += wave_radius_increment) {
+                p = transform(x_double_slit, slit_top_y); ctx.beginPath(); ctx.arc(p.x, p.y, r * scale, -angle_range_rad, angle_range_rad); ctx.stroke();
+                p = transform(x_double_slit, slit_bottom_y); ctx.beginPath(); ctx.arc(p.x, p.y, r * scale, -angle_range_rad, angle_range_rad); ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+
+            ctx.lineWidth = 1.5; const max_theta = Math.atan((scene.height/2 + 5) / current_L_distance_vpython);
+            const max_order = Math.floor(Math.abs(slit_separation_d_nm * Math.sin(max_theta) / wavelength_nm)) + 2;
+            for (let n = -max_order; n <= max_order; n++) {
+                let sin_theta_bright = n * wavelength_nm / slit_separation_d_nm;
+                if (Math.abs(sin_theta_bright) <= 1) { const y = current_L_distance_vpython * sin_theta_bright; if (Math.abs(y) <= scene.height / 2) { ctx.strokeStyle = current_wave_color; ctx.setLineDash([]); ctx.beginPath(); p1 = transform(x_double_slit, 0); p2 = transform(current_x_screen_plate, y); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); } }
+                let sin_theta_dark = (n + 0.5) * wavelength_nm / slit_separation_d_nm;
+                if (Math.abs(sin_theta_dark) <= 1) { const y = current_L_distance_vpython * sin_theta_dark; if (Math.abs(y) <= scene.height / 2) { ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)'; ctx.setLineDash([4 * (scale/3.5), 4 * (scale/3.5)]); ctx.beginPath(); p1 = transform(x_double_slit, 0); p2 = transform(current_x_screen_plate, y); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); } }
+            }
+            ctx.setLineDash([]);
+            
+            p = transform(current_x_screen_plate, 0); ctx.fillStyle = 'black';
+            ctx.fillRect(p.x - plate_thickness/2*scale, y_center_px - plate_h_px/2, plate_thickness*scale, plate_h_px);
+            p = transform(current_x_screen_plate, label_y_pos); ctx.fillText('屏幕', p.x, p.y);
+
+            const pattern_display_width_world = 15;
+            const p_pattern_bg = transform(x_pattern_display, 0);
+            const pattern_width_px = pattern_display_width_world * scale;
+            ctx.fillStyle = 'black';
+            ctx.fillRect(p_pattern_bg.x - pattern_width_px / 2, y_center_px - plate_h_px / 2, pattern_width_px, plate_h_px);
+            
+            const num_pattern_slices = 400; const slice_height_world = scene.height / num_pattern_slices; const slice_height_px = slice_height_world * scale;
+            const rgb_base_str = wavelength_to_rgb(wavelength_nm); const rgb_values = rgb_base_str.match(/\d+/g).map(Number);
+            for(let i = 0; i < num_pattern_slices; i++) {
+                const y_slice_center_world = -scene.height/2 + (i + 0.5) * slice_height_world;
+                const intensity = calculate_intensity(y_slice_center_world, current_L_distance_vpython, params.slit_width_a_nm, slit_separation_d_nm, wavelength_nm);
+                ctx.fillStyle = `rgba(${rgb_values[0]}, ${rgb_values[1]}, ${rgb_values[2]}, ${intensity})`;
+                const p_slice = transform(x_pattern_display, y_slice_center_world);
+                ctx.fillRect(p_slice.x - pattern_width_px/2, p_slice.y - slice_height_px/2, pattern_width_px, slice_height_px + 1);
+            }
+            
+            ctx.globalAlpha = 1.0; ctx.fillStyle = 'black';
+            p = transform(x_pattern_display, label_y_pos); ctx.fillText('干涉條紋', p.x, p.y);
+
+            const middle_h = (visual_d - double_slit_opening_visual);
+            p = transform(x_double_slit, 0); ctx.fillStyle = '#b28766';
+            ctx.fillRect(p.x - plate_thickness/2*scale, y_center_px - middle_h/2*scale, plate_thickness*scale, middle_h*scale);
+            const top_part_h = (scene.height/2) - (slit_top_y + double_slit_opening_visual/2);
+            ctx.fillRect(p.x - plate_thickness/2*scale, y_center_px - (scene.height/2)*scale, plate_thickness*scale, top_part_h*scale);
+            const bottom_part_h = (scene.height/2) - (Math.abs(slit_bottom_y) + double_slit_opening_visual/2);
+            ctx.fillRect(p.x - plate_thickness/2*scale, y_center_px + (Math.abs(slit_bottom_y) + double_slit_opening_visual/2)*scale, plate_thickness*scale, bottom_part_h*scale);
+            p = transform(x_double_slit, label_y_pos); ctx.fillStyle = 'black'; ctx.fillText('雙狹縫', p.x, p.y);
+        }
+
+        function drawVerticalText(ctx, text, x, y, fontSize, spacing) {
+            ctx.font = `${fontSize}px "Microsoft JhengHei"`;
+            ctx.textAlign = 'center';
+            for (let i = 0; i < text.length; i++) {
+                ctx.fillText(text[i], x, y + i * (fontSize + spacing));
+            }
+        }
+
+        function drawIntensityGraph() {
+            intensityCanvas.width = 800; intensityCanvas.height = 600;
+            const w = intensityCanvas.width, h = intensityCanvas.height;
+            
+            intensityCtx.clearRect(0, 0, w, h);
+            intensityCtx.fillStyle = '#ffffff';
+            intensityCtx.fillRect(0, 0, w, h);
+
+            const margin = { top: 80, right: 100, bottom: 80, left: 100 };
+            const plotWidth = w - margin.left - margin.right;
+            const plotHeight = h - margin.top - margin.bottom;
+
+            intensityCtx.strokeStyle = '#333333'; intensityCtx.lineWidth = 2;
+            intensityCtx.beginPath();
+            const xAxisY = margin.top + plotHeight;
+            intensityCtx.moveTo(margin.left, xAxisY); 
+            intensityCtx.lineTo(margin.left + plotWidth, xAxisY);
+            const yAxisX = margin.left + plotWidth / 2;
+            intensityCtx.moveTo(yAxisX, margin.top); 
+            intensityCtx.lineTo(yAxisX, xAxisY);
+            intensityCtx.stroke();
+
+            const { wavelength_nm, slit_separation_d_nm, L_distance_cm } = params;
+            const current_L_distance_vpython = cm_to_vpython_L_units(L_distance_cm);
+
+            intensityCtx.lineWidth = 2;
+            const plotRangeWorld = scene.height * 1.1; 
+            for (let n = 1; ; n++) {
+                const sin_theta = n * wavelength_nm / slit_separation_d_nm;
+                if (Math.abs(sin_theta) >= 1) break;
+                
+                const y_world = current_L_distance_vpython * sin_theta;
+                const x_norm = y_world / (plotRangeWorld / 2);
+
+                if(Math.abs(x_norm) > 1) break;
+
+                const x_tick_pos = yAxisX + x_norm * (plotWidth / 2);
+                intensityCtx.beginPath();
+                intensityCtx.moveTo(x_tick_pos, xAxisY);
+                intensityCtx.lineTo(x_tick_pos, xAxisY + 8);
+                intensityCtx.stroke();
+                
+                const x_tick_neg = yAxisX - x_norm * (plotWidth / 2);
+                intensityCtx.beginPath();
+                intensityCtx.moveTo(x_tick_neg, xAxisY);
+                intensityCtx.lineTo(x_tick_neg, xAxisY + 8);
+                intensityCtx.stroke();
+            }
+
+            intensityCtx.fillStyle = '#333333'; intensityCtx.font = '32px "Microsoft JhengHei"';
+            intensityCtx.textAlign = 'center';
+            intensityCtx.fillText('亮度', yAxisX, margin.top - 15);
+            
+            drawVerticalText(intensityCtx, "屏幕位置", w - margin.right + 40, xAxisY - 90, 32, 8);
+            
+            intensityCtx.strokeStyle = '#d50000'; intensityCtx.lineWidth = 3;
+            intensityCtx.beginPath();
+
+            const num_plot_points = 800;
+            for(let i = 0; i <= num_plot_points; i++) {
+                const x_norm = (i / num_plot_points) * 2 - 1;
+                const y_slice_center_world = x_norm * (plotRangeWorld / 2);
+                const intensity = calculate_intensity(y_slice_center_world, current_L_distance_vpython, params.slit_width_a_nm, slit_separation_d_nm, wavelength_nm);
+                
+                const px = yAxisX + x_norm * (plotWidth / 2);
+                const py = xAxisY - (intensity * plotHeight * 0.8); 
+                
+                if (i === 0) { intensityCtx.moveTo(px, py); } 
+                else { intensityCtx.lineTo(px, py); }
+            }
+            intensityCtx.stroke();
+        }
+
+        function updateAndRedraw() {
+            params.wavelength_nm = Number(wavelengthSlider.value);
+            params.slit_separation_d_nm = Number(slitSeparationSlider.value);
+            params.L_distance_cm = Number(LDistanceSlider.value);
+            const diffractionMode = document.querySelector('input[name="diffractionMode"]:checked').value;
+            params.considerDiffraction = (diffractionMode === 'consider');
+
+            wavelengthValue.textContent = `${params.wavelength_nm} nm`;
+            
+            const d_in_mm = (params.slit_separation_d_nm / 10000).toFixed(2);
+            slitSeparationValue.textContent = `${d_in_mm} mm`;
+            
+            LDistanceValue.textContent = `${params.L_distance_cm} cm`;
+            
+            requestAnimationFrame(() => {
+                drawSimulation();
+                drawIntensityGraph();
+            });
+        }
+
+        wavelengthSlider.addEventListener('input', updateAndRedraw);
+        slitSeparationSlider.addEventListener('input', updateAndRedraw);
+        LDistanceSlider.addEventListener('input', updateAndRedraw);
+        document.querySelectorAll('input[name="diffractionMode"]').forEach(radio => {
+            radio.addEventListener('change', updateAndRedraw);
+        });
+
+        const resizeObserver = new ResizeObserver(() => {
+             requestAnimationFrame(() => {
+                drawSimulation();
+                drawIntensityGraph();
+            });
+        });
+        resizeObserver.observe(document.querySelector('.container'));
+
+        updateAndRedraw();
+    </script>
+</body>
+</html>
