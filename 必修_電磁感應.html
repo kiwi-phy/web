@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電磁感應示範實驗模擬</title>
+    <style>
+        body { margin: 0; padding: 20px; background-color: #e1f7fa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, 'Microsoft JhengHei', '微軟正黑體'; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .container { width: 100%; max-width: 1280px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); overflow: hidden; border: 1px solid #d1d9e6; }
+        .header { background: linear-gradient(135deg, #34495e, #2c3e50); color: white; padding: 15px 25px; text-align: center; }
+        .header h1 { margin: 0; font-size: 1.8em; }
+        .header p { margin: 5px 0 0; color: #bdc3c7; font-size: 0.9em; }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .view-panel {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dde1e2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dde1e2;
+            background-color: #f9fafb;
+        }
+        
+        .panel h3, .view-panel h3 { color: #2c3e50; margin-top: 0; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-bottom: 15px; font-size: 1.1em; }
+
+        .control-group { display: flex; align-items: center; margin-bottom: 12px; }
+        .control-group label { width: 90px; font-weight: bold; color: #34495e; flex-shrink: 0; font-size: 0.9em;}
+        .slider { flex-grow: 1; margin: 0 10px; -webkit-appearance: none; background: #d7dbdf; height: 8px; border-radius: 4px; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        .slider::-moz-range-thumb { width: 20px; height: 20px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        .value-display { width: 70px; text-align: center; font-weight: bold; color: #c0392b; background-color: #fff; padding: 5px 8px; border-radius: 5px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        
+        #loopPositionSlider::-webkit-slider-thumb { background: #e67e22; }
+        #loopPositionSlider::-moz-range-thumb { background: #e67e22; }
+
+        .radio-controls { display: flex; gap: 15px; align-items: center; flex-grow: 1; }
+        .radio-controls label { font-size: 0.9em; cursor: pointer; padding-left: 4px; }
+        .radio-controls span { display: flex; align-items: center; }
+        .radio-controls span:first-child { width: 110px; }
+
+        canvas {
+            display: block;
+            background-color: #ffffff;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+        }
+        #mainSimulationCanvas { 
+            width: 100%;
+            height: auto;
+            aspect-ratio: 960 / 640; 
+        }
+        
+        /* --- MODIFIED: New rules for galvanometer layout --- */
+        #galvanometer-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .canvas-wrapper {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 0; /* Prevents flexbox overflow issues */
+            background-color: #fffde7; /* Yellow background is on the wrapper */
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+        }
+        #galvanometerCanvas {
+            width: 100%;
+            height: auto;
+            max-width: 440px; /* Corresponds to inner width of the panel */
+            aspect-ratio: 480 / 320; /* CRITICAL: Enforces correct proportions */
+            border: none; /* Border is now on the wrapper */
+        }
+        
+        footer {
+            padding-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>電磁感應示範實驗模擬</h1>
+            <p>觀察線圈進出磁場感應電流的變化</p>
+        </div>
+
+        <div class="main-content">
+            <div class="view-panel">
+                <h3>主模擬區</h3>
+                <canvas id="mainSimulationCanvas"></canvas>
+            </div>
+
+            <div class="sidebar">
+                <div class="panel">
+                    <h3>控制面板</h3>
+                    <div class="control-group">
+                        <label for="loopPositionSlider">圓環位置:</label>
+                        <input type="range" id="loopPositionSlider" class="slider" min="-1.0" max="1.0" step="0.001" value="0.0">
+                        <span class="value-display" id="positionValue">0.00</span>
+                    </div>
+                    <div class="control-group">
+                        <label>磁場方向:</label>
+                        <div class="radio-controls">
+                            <span>
+                                <input type="radio" id="fieldOut" name="magneticFieldDirection" value="out" checked onchange="updateFieldDirection()">
+                                <label for="fieldOut">出紙面</label>
+                            </span>
+                            <span>
+                                <input type="radio" id="fieldIn" name="magneticFieldDirection" value="in" onchange="updateFieldDirection()">
+                                <label for="fieldIn">入紙面</label>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>線圈形狀:</label>
+                        <div class="radio-controls">
+                            <span>
+                                <input type="radio" id="loopComplete" name="loopShape" value="complete" checked onchange="updateLoopShape()">
+                                <label for="loopComplete">完整線圈</label>
+                            </span>
+                            <span>
+                                <input type="radio" id="loopSlit" name="loopShape" value="slit" onchange="updateLoopShape()">
+                                <label for="loopSlit">缺口線圈</label>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- --- MODIFIED: HTML structure for galvanometer --- -->
+                <div class="panel" id="galvanometer-panel">
+                    <h3>觀察感應電流大小</h3>
+                    <div class="canvas-wrapper">
+                         <canvas id="galvanometerCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>翰林 | 相信學習 © 2026 超好學學測複習講義</footer>
+
+    <script>
+        const mainSimulationCanvas = document.getElementById('mainSimulationCanvas');
+        const mainCtx = mainSimulationCanvas.getContext('2d');
+        const galvanometerCanvas = document.getElementById('galvanometerCanvas');
+        const galvanometerCtx = galvanometerCanvas.getContext('2d');
+        
+        const loopPositionSlider = document.getElementById('loopPositionSlider');
+        const positionValueDisplay = document.getElementById('positionValue');
+
+        // --- MODIFIED: Fixed drawing buffer sizes ---
+        mainSimulationCanvas.width = 960;
+        mainSimulationCanvas.height = 640;
+        galvanometerCanvas.width = 480;
+        galvanometerCanvas.height = 320;
+
+        let B_FIELD_DIRECTION = 1;
+        let isLoopComplete = true; 
+        const LOOP_RADIUS_WORLD = 0.15;
+        const LOOP_THICKNESS = 4;
+        const FIELD_Y_MIN_WORLD = -0.31; 
+        const FIELD_Y_MAX_WORLD = 0.31; 
+        const FIELD_X_COUNT = 12; 
+        const FIELD_Y_COUNT = 12; 
+        const dot_spacing_y_world = (FIELD_Y_MAX_WORLD - FIELD_Y_MIN_WORLD) / (FIELD_Y_COUNT - 1);
+        const dot_spacing_x_world = dot_spacing_y_world;
+        const FIELD_X_RANGE_WORLD = dot_spacing_x_world * (FIELD_X_COUNT - 1);
+        const FIELD_X_MIN_WORLD = -FIELD_X_RANGE_WORLD / 2;
+        const FIELD_X_MAX_WORLD = FIELD_X_RANGE_WORLD / 2;
+        const GALVANOMETER_SCALE_CURRENT = 0.25;
+        const NEEDLE_SMOOTHING_FACTOR = 0.1;
+
+        let scale;
+        let originX, originY;
+        let loopX_world;
+        const loopY_world = 0;
+        let lastLoopX_world;
+        let lastFrameTime = performance.now();
+        let inducedCurrent = 0;
+        let galvanometerNeedleAngle = 0;
+        const loopHistory = [];
+        const MAX_HISTORY = 10;
+
+        class Vector2D {
+            constructor(x, y) { this.x = x; this.y = y; }
+        }
+
+        function worldToCanvas(worldVec) {
+            return {
+                x: originX + worldVec.x * scale,
+                y: originY - worldVec.y * scale
+            };
+        }
+
+        function getEffectiveArea(currentLoopX_world) {
+            const R = LOOP_RADIUS_WORLD;
+            const x_loop_center = currentLoopX_world;
+            const field_left_boundary = FIELD_X_MIN_WORLD;
+            const field_right_boundary = FIELD_X_MAX_WORLD;
+            let x_overlap_start = Math.max(x_loop_center - R, field_left_boundary);
+            let x_overlap_end = Math.min(x_loop_center + R, field_right_boundary);
+            if (x_overlap_start >= x_overlap_end) return 0;
+            function areaToRightOfLine(x_offset) {
+                if (x_offset >= R) return 0;
+                if (x_offset <= -R) return Math.PI * R * R;
+                const theta = Math.acos(x_offset / R);
+                return R * R * theta - x_offset * Math.sqrt(R * R - x_offset * x_offset);
+            }
+            return areaToRightOfLine(x_overlap_start - x_loop_center) - areaToRightOfLine(x_overlap_end - x_loop_center);
+        }
+
+        function calculateInduction(currentLoopX_world, currentTime) {
+            if (!isLoopComplete) {
+                inducedCurrent = 0;
+                const targetNeedleAngle = 0;
+                galvanometerNeedleAngle += (targetNeedleAngle - galvanometerNeedleAngle) * NEEDLE_SMOOTHING_FACTOR;
+                lastLoopX_world = currentLoopX_world;
+                lastFrameTime = currentTime;
+                return;
+            }
+
+            const deltaTime = (currentTime - lastFrameTime) / 1000;
+            const currentArea = getEffectiveArea(currentLoopX_world);
+            const lastArea = getEffectiveArea(lastLoopX_world);
+            let dArea_dt_val = 0;
+            if (deltaTime > 0 && Math.abs(currentLoopX_world - lastLoopX_world) > 1e-9) {
+                dArea_dt_val = (currentArea - lastArea) / deltaTime;
+            }
+            const amplification_factor = 80;
+            inducedCurrent = dArea_dt_val * amplification_factor * B_FIELD_DIRECTION;
+            const targetNeedleAngle = Math.min(Math.PI / 1.25, Math.max(-Math.PI / 1.25, inducedCurrent / GALVANOMETER_SCALE_CURRENT * Math.PI / 1.25));
+            galvanometerNeedleAngle += (targetNeedleAngle - galvanometerNeedleAngle) * NEEDLE_SMOOTHING_FACTOR;
+            lastLoopX_world = currentLoopX_world;
+            lastFrameTime = currentTime;
+        }
+
+        function drawMainSimulation() {
+            mainCtx.clearRect(0, 0, mainSimulationCanvas.width, mainSimulationCanvas.height);
+            
+            const WORLD_DISPLAY_X_RANGE = FIELD_X_MAX_WORLD - FIELD_X_MIN_WORLD + LOOP_RADIUS_WORLD * 2.5;
+            const WORLD_DISPLAY_Y_RANGE = FIELD_Y_MAX_WORLD - FIELD_Y_MIN_WORLD + LOOP_RADIUS_WORLD * 1.5;
+            
+            scale = Math.min(mainSimulationCanvas.width / WORLD_DISPLAY_X_RANGE, mainSimulationCanvas.height / WORLD_DISPLAY_Y_RANGE);
+            originX = mainSimulationCanvas.width / 2;
+            originY = mainSimulationCanvas.height / 2;
+
+            const dot_size = 5;
+            mainCtx.fillStyle = '#2196f3';
+            for (let i = 0; i < FIELD_X_COUNT; i++) {
+                for (let j = 0; j < FIELD_Y_COUNT; j++) {
+                    const dot_canvas = worldToCanvas(new Vector2D(FIELD_X_MIN_WORLD + i * dot_spacing_x_world, FIELD_Y_MIN_WORLD + j * dot_spacing_y_world));
+                    if (B_FIELD_DIRECTION === 1) {
+                        mainCtx.beginPath();
+                        mainCtx.arc(dot_canvas.x, dot_canvas.y, dot_size / 2, 0, Math.PI * 2);
+                        mainCtx.fill();
+                    } else {
+                        mainCtx.beginPath();
+                        mainCtx.lineWidth = 2;
+                        mainCtx.moveTo(dot_canvas.x - dot_size / 2, dot_canvas.y - dot_size / 2);
+                        mainCtx.lineTo(dot_canvas.x + dot_size / 2, dot_canvas.y + dot_size / 2);
+                        mainCtx.moveTo(dot_canvas.x + dot_size / 2, dot_canvas.y - dot_size / 2);
+                        mainCtx.lineTo(dot_canvas.x - dot_size / 2, dot_canvas.y + dot_size / 2);
+                        mainCtx.strokeStyle = '#2196f3';
+                        mainCtx.stroke();
+                    }
+                }
+            }
+            loopHistory.forEach((item, index) => {
+                const opacity = (index + 1) / MAX_HISTORY * 0.2;
+                drawLoop(mainCtx, item.x, item.y, 'rgba(255, 180, 50, ' + opacity + ')', isLoopComplete);
+            });
+            drawLoop(mainCtx, loopX_world, loopY_world, 'rgb(255, 180, 50)', isLoopComplete);
+
+            const arrowThreshold = 0.05;
+            if (isLoopComplete && Math.abs(inducedCurrent) > arrowThreshold) {
+                const isClockwise = inducedCurrent > 0;
+                const loop_canvas = worldToCanvas(new Vector2D(loopX_world, loopY_world));
+                const radius_pixels = LOOP_RADIUS_WORLD * scale;
+                let angle1, angle2;
+                if (isClockwise) {
+                    angle1 = 5 * Math.PI / 6;
+                    angle2 = -Math.PI / 6;
+                } else {
+                    angle1 = Math.PI / 6;
+                    angle2 = 7 * Math.PI / 6;
+                }
+                drawArcArrow(mainCtx, loop_canvas.x, loop_canvas.y, radius_pixels, angle1, isClockwise);
+                drawArcArrow(mainCtx, loop_canvas.x, loop_canvas.y, radius_pixels, angle2, isClockwise);
+            }
+        }
+
+        function drawLoop(ctx, x_world, y_world, color, isComplete) {
+            const loop_canvas = worldToCanvas(new Vector2D(x_world, y_world));
+            const radius_pixels = LOOP_RADIUS_WORLD * scale;
+            ctx.beginPath();
+            if (isComplete) {
+                ctx.arc(loop_canvas.x, loop_canvas.y, radius_pixels, 0, Math.PI * 2);
+            } else {
+                const gap = 0.5;
+                ctx.arc(loop_canvas.x, loop_canvas.y, radius_pixels, gap / 2, Math.PI * 2 - gap / 2);
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = LOOP_THICKNESS;
+            ctx.stroke();
+        }
+
+        function drawArcArrow(ctx, cx, cy, radius, angle, isClockwise) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = LOOP_THICKNESS + 2;
+            const arc_span = Math.PI / 3;
+            if (isClockwise) {
+                ctx.arc(cx, cy, radius, angle + arc_span, angle, true);
+            } else {
+                ctx.arc(cx, cy, radius, angle - arc_span, angle, false);
+            }
+            ctx.stroke();
+            const arrowLength = 20;
+            const arrowWidth = 15;
+            ctx.save();
+            ctx.fillStyle = '#e11d48';
+            const tipX = cx + radius * Math.cos(angle);
+            const tipY = cy - radius * Math.sin(angle); 
+            const tangentAngle = angle + (isClockwise ? -Math.PI / 2 : Math.PI / 2);
+            ctx.translate(tipX, tipY);
+            ctx.rotate(-tangentAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-arrowLength, arrowWidth / 2);
+            ctx.lineTo(-arrowLength, -arrowWidth / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawGalvanometer() {
+            // --- MODIFIED: Simplified drawing logic on fixed-size canvas ---
+            galvanometerCtx.clearRect(0, 0, galvanometerCanvas.width, galvanometerCanvas.height);
+            const g_width = galvanometerCanvas.width;
+            const g_height = galvanometerCanvas.height;
+            const g_x = g_width / 2;
+            const g_y = g_height / 2; // Center of the fixed-size canvas
+            const size_multiplier = 0.85;
+
+            // Background is now white, as the wrapper provides the yellow
+            galvanometerCtx.fillStyle = '#ffffff';
+            galvanometerCtx.fillRect(0, 0, g_width, g_height);
+            
+            const arcRadius = g_width * 0.3 * size_multiplier;
+            const tickLength = g_width * (0.28 - 0.25) * size_multiplier;
+            const tickEndRadius = arcRadius;
+            const tickStartRadius = tickEndRadius - tickLength;
+            const textRadius = g_width * 0.22 * size_multiplier;
+            const needleLength = g_width * 0.2 * size_multiplier;
+
+            galvanometerCtx.beginPath();
+            galvanometerCtx.arc(g_x, g_y, arcRadius, Math.PI * 0.8, Math.PI * 0.2);
+            galvanometerCtx.strokeStyle = '#888';
+            galvanometerCtx.lineWidth = 1.5;
+            galvanometerCtx.stroke();
+            for (let i = -5; i <= 5; i++) {
+                const angle_factor = i / 5;
+                const angle_rad = angle_factor * (Math.PI / 1.5);
+                const x1 = g_x + Math.sin(angle_rad) * tickStartRadius;
+                const y1 = g_y - Math.cos(angle_rad) * tickStartRadius;
+                const x2 = g_x + Math.sin(angle_rad) * tickEndRadius;
+                const y2 = g_y - Math.cos(angle_rad) * tickEndRadius;
+                galvanometerCtx.beginPath();
+                galvanometerCtx.moveTo(x1, y1);
+                galvanometerCtx.lineTo(x2, y2);
+                galvanometerCtx.stroke();
+                
+                galvanometerCtx.fillStyle = '#333';
+                galvanometerCtx.font = '20px Arial';
+                galvanometerCtx.textAlign = 'center';
+                const text_x = g_x + Math.sin(angle_rad) * textRadius;
+                const text_y = g_y - Math.cos(angle_rad) * textRadius;
+                galvanometerCtx.fillText(i.toString(), text_x, text_y);
+            }
+            
+            galvanometerCtx.save();
+            galvanometerCtx.translate(g_x, g_y);
+            galvanometerCtx.rotate(galvanometerNeedleAngle);
+            galvanometerCtx.beginPath();
+            galvanometerCtx.moveTo(0, 8);
+            galvanometerCtx.lineTo(0, -needleLength);
+            galvanometerCtx.strokeStyle = 'red';
+            galvanometerCtx.lineWidth = 4;
+            galvanometerCtx.stroke();
+            galvanometerCtx.restore();
+
+            galvanometerCtx.fillStyle = '#333';
+            galvanometerCtx.beginPath();
+            galvanometerCtx.arc(g_x, g_y, 6, 0, Math.PI * 2);
+            galvanometerCtx.fill();
+
+            galvanometerCtx.font = '28px "Microsoft JhengHei", sans-serif';
+            galvanometerCtx.textAlign = 'center';
+            galvanometerCtx.fillText('檢流計', g_x, g_height - 30);
+        }
+
+        let animationFrameId;
+        function animate(timestamp) {
+            loopHistory.push({ x: loopX_world, y: loopY_world });
+            if (loopHistory.length > MAX_HISTORY) {
+                loopHistory.shift();
+            }
+            calculateInduction(loopX_world, timestamp);
+            drawMainSimulation();
+            drawGalvanometer();
+
+            positionValueDisplay.textContent = parseFloat(loopX_world).toFixed(2);
+            
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        function setupCanvasesAndStart() {
+            loopX_world = parseFloat(loopPositionSlider.value);
+            lastLoopX_world = loopX_world;
+            loopHistory.length = 0;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            lastFrameTime = performance.now();
+            animate(lastFrameTime);
+        }
+
+        loopPositionSlider.addEventListener('input', (e) => {
+            loopX_world = parseFloat(e.target.value);
+        });
+
+        function updateFieldDirection() {
+            const selectedDirection = document.querySelector('input[name="magneticFieldDirection"]:checked').value;
+            B_FIELD_DIRECTION = (selectedDirection === 'out') ? 1 : -1;
+            lastLoopX_world = loopX_world;
+            galvanometerNeedleAngle = 0;
+            inducedCurrent = 0;
+        }
+
+        function updateLoopShape() {
+            const selectedShape = document.querySelector('input[name="loopShape"]:checked').value;
+            isLoopComplete = (selectedShape === 'complete');
+            if (!isLoopComplete) {
+                inducedCurrent = 0;
+            }
+        }
+        
+        window.addEventListener('load', () => {
+            updateFieldDirection();
+            updateLoopShape();
+            setupCanvasesAndStart();
+        });
+        
+    </script>
+</body>
+</html>
