@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交通工具翻翻樂 (升級版) 🚁 🏎️ 🚲</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700&family=Baloo+2:wght@700&display=swap');
+        :root {
+            --bg-color: #f0f8ff;
+            --primary-color: #ff6347;
+            --secondary-color: #4682b4;
+            --card-bg: #ffffff;
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            --font-family: 'Noto Sans TC', 'Baloo 2', sans-serif;
+        }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #333;
+        }
+        .game-container {
+            width: 100%;
+            max-width: 900px; /* 稍微加寬以容納更多卡片 */
+            text-align: center;
+        }
+        h1 {
+            color: var(--secondary-color);
+            font-family: 'Baloo 2', cursive;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px var(--card-shadow);
+            margin-bottom: 20px;
+        }
+        .controls {
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .controls label { font-size: 1.2em; font-weight: 500; }
+        .btn {
+            padding: 12px 25px;
+            font-size: 1.1em;
+            font-family: var(--font-family);
+            font-weight: 700;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px var(--card-shadow);
+        }
+        .difficulty-btn {
+            background-color: var(--card-bg);
+            color: var(--secondary-color);
+            border: 2px solid var(--secondary-color);
+        }
+        .difficulty-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .start-btn { background-color: var(--primary-color); color: white; }
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 12px rgba(255, 99, 71, 0.3);
+        }
+        .game-board {
+            display: grid;
+            gap: 15px;
+            perspective: 1000px;
+        }
+        .card {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .card.flipped, .card.matched {
+            transform: rotateY(180deg);
+            cursor: default;
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px var(--card-shadow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 5px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .card-front {
+            background: radial-gradient(circle, #a2d2ff, #bde0fe, #a2d2ff);
+            color: white;
+            font-size: 4em;
+            text-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        .card-front::before { content: '★'; opacity: 0.8; }
+        .card-back {
+            background-color: var(--card-bg);
+            transform: rotateY(180deg);
+            justify-content: space-around;
+        }
+        .card-back .text-chinese { font-size: 1.4em; font-weight: 700; color: var(--secondary-color); }
+        .card-back .emoji { font-size: 3.5em; line-height: 1; }
+        .card-back .text-english { font-size: 1.1em; font-weight: 500; color: #555; font-style: italic; }
+
+        @media (max-width: 600px) {
+            .card-back .text-chinese { font-size: 1.1em; }
+            .card-back .emoji { font-size: 2.8em; }
+            .card-back .text-english { font-size: 0.9em; }
+        }
+         @media (max-width: 400px) {
+            .card-back .text-chinese { font-size: 0.9em; }
+            .card-back .emoji { font-size: 2.2em; }
+            .card-back .text-english { font-size: 0.7em; }
+        }
+
+        .win-message {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); display: none;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .win-box {
+            background: white; padding: 40px; border-radius: 20px;
+            text-align: center; animation: pop-in 0.5s ease-out;
+        }
+        .win-box h2 {
+            font-family: 'Baloo 2', cursive; font-size: 3em;
+            color: var(--primary-color); margin-bottom: 20px;
+        }
+        @keyframes pop-in {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>交通工具翻翻樂 (升級版)</h1>
+        <div class="controls">
+            <label>選擇難度：</label>
+            <div>
+                <button class="btn difficulty-btn" data-cards="8">8 張</button>
+                <button class="btn difficulty-btn active" data-cards="12">12 張</button>
+                <button class="btn difficulty-btn" data-cards="16">16 張</button>
+                <button class="btn difficulty-btn" data-cards="24">24 張</button> <!-- 新增難度 -->
+            </div>
+            <button class="btn start-btn" id="start-game-btn">開始遊戲</button>
+        </div>
+        <div class="game-board" id="game-board"></div>
+    </div>
+    <div class="win-message" id="win-message">
+        <div class="win-box">
+            <h2>太棒了！全部答對！🎉</h2>
+            <button class="btn start-btn" onclick="location.reload()">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 全新素材庫 (根據您的最新圖片) ---
+        const allCardData = [
+            { id: 1, chinese: '消防車', english: 'Fire Truck', emoji: '🚒' },
+            { id: 2, chinese: '警車', english: 'Police Car', emoji: '🚓' },
+            { id: 3, chinese: '救護車', english: 'Ambulance', emoji: '🚑' },
+            { id: 4, chinese: '公車', english: 'Bus', emoji: '🚌' },
+            { id: 5, chinese: '計程車', english: 'Taxi', emoji: '🚕' },
+            { id: 6, chinese: '飛機', english: 'Airplane', emoji: '✈️' },
+            { id: 7, chinese: '火車', english: 'Train', emoji: '🚂' },
+            { id: 8, chinese: '高鐵', english: 'High-Speed Train', emoji: '🚄' },
+            { id: 9, chinese: '地鐵', english: 'Subway', emoji: '🚇' },
+            { id: 10, chinese: '郵務車', english: 'Mail Truck', emoji: '🛻' },
+            { id: 11, chinese: '垃圾車', english: 'Garbage Truck', emoji: '🚛' },
+            { id: 12, chinese: '賽車', english: 'Race Car', emoji: '🏎️' },
+            { id: 13, chinese: '高空纜車', english: 'Cable Car', emoji: '🚠' },
+            { id: 14, chinese: '直升機', english: 'Helicopter', emoji: '🚁' },
+            { id: 15, chinese: '腳踏車', english: 'Bicycle', emoji: '🚲' },
+            { id: 16, chinese: '摩托車', english: 'Motorcycle', emoji: '🏍️' },
+            { id: 17, chinese: '熱氣球', english: 'Hot Air Balloon', emoji: '🎈' },
+            { id: 18, chinese: '推土機', english: 'Bulldozer', emoji: '🚜' }
+        ].filter(item => item.emoji); // 確保所有項目都有 emoji
+
+        const gameBoard = document.getElementById('game-board');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+        const winMessage = document.getElementById('win-message');
+        
+        let cardCount = 12;
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let lockBoard = true;
+        let englishVoice = null; // 用來儲存找到的英文女聲
+
+        // --- 尋找並載入語音的函式 ---
+        function loadVoices() {
+            const voices = window.speechSynthesis.getVoices();
+            // 優先尋找美式英文(en-US)的女性聲音
+            englishVoice = voices.find(voice => voice.lang === 'en-US' && /female/i.test(voice.name));
+            // 如果找不到，就找任意英文女性聲音
+            if (!englishVoice) {
+                englishVoice = voices.find(voice => voice.lang.startsWith('en-') && /female/i.test(voice.name));
+            }
+            // 如果還是找不到，就用預設的第一個美式英文聲音
+            if (!englishVoice) {
+                englishVoice = voices.find(voice => voice.lang === 'en-US');
+            }
+        }
+
+        // --- 雙語發音函式 (使用找到的聲音) ---
+        function speak(chinese, english) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const chineseUtterance = new SpeechSynthesisUtterance(chinese);
+                chineseUtterance.lang = 'zh-TW';
+                chineseUtterance.rate = 1;
+                chineseUtterance.pitch = 1.2;
+
+                const englishUtterance = new SpeechSynthesisUtterance(english);
+                if (englishVoice) { // 如果找到了特定聲音，就使用它
+                    englishUtterance.voice = englishVoice;
+                }
+                englishUtterance.lang = 'en-US'; // 即使指定了 voice，也最好指定 lang
+                englishUtterance.rate = 0.9;
+                englishUtterance.pitch = 1;
+
+                chineseUtterance.onend = () => {
+                    window.speechSynthesis.speak(englishUtterance);
+                };
+                window.speechSynthesis.speak(chineseUtterance);
+            }
+        }
+        
+        function shuffle(array) {
+            let newArr = [...array];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
+        function createBoard() {
+            gameBoard.innerHTML = '';
+            matchedPairs = 0;
+            lockBoard = true;
+            flippedCards = [];
+            
+            const pairsCount = cardCount / 2;
+            const gameCardsData = shuffle(allCardData).slice(0, pairsCount);
+            const cardsToPlay = shuffle([...gameCardsData, ...gameCardsData]);
+
+            const columns = cardCount === 8 ? 4 : (cardCount === 12 ? 4 : (cardCount === 16 ? 4 : 6));
+            const rows = cardCount / columns;
+            gameBoard.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+
+            cardsToPlay.forEach(item => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('card');
+                cardElement.dataset.id = item.id;
+                cardElement.dataset.chinese = item.chinese;
+                cardElement.dataset.english = item.english;
+                cardElement.innerHTML = `
+                    <div class="card-face card-front"></div>
+                    <div class="card-face card-back">
+                        <div class="text-chinese">${item.chinese}</div>
+                        <div class="emoji">${item.emoji}</div>
+                        <div class="text-english">${item.english}</div>
+                    </div>
+                `;
+                cardElement.addEventListener('click', handleCardClick);
+                gameBoard.appendChild(cardElement);
+            });
+        }
+        
+        function handleCardClick(e) {
+            if (lockBoard) return;
+            const clickedCard = e.currentTarget;
+            if (clickedCard.classList.contains('flipped')) return;
+
+            if (flippedCards.length === 2) {
+                unflipCards();
+            }
+            flipCard(clickedCard);
+            flippedCards.push(clickedCard);
+            if (flippedCards.length === 2) {
+                checkForMatch();
+            }
+        }
+
+        function flipCard(card) {
+            card.classList.add('flipped');
+            speak(card.dataset.chinese, card.dataset.english);
+        }
+
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.id === card2.dataset.id) {
+                disableCards();
+            }
+        }
+
+        function disableCards() {
+            flippedCards.forEach(card => card.classList.add('matched'));
+            matchedPairs++;
+            flippedCards = [];
+            if (matchedPairs === cardCount / 2) {
+                setTimeout(() => { winMessage.style.display = 'flex'; }, 800);
+            }
+        }
+        
+        function unflipCards() {
+            flippedCards.forEach(card => card.classList.remove('flipped'));
+            flippedCards = [];
+        }
+
+        function startGame() {
+            createBoard();
+            const allCards = document.querySelectorAll('.card');
+            allCards.forEach(card => card.classList.add('flipped'));
+            const previewTime = 1000 + (cardCount * 150);
+            setTimeout(() => {
+                allCards.forEach(card => card.classList.remove('flipped'));
+                lockBoard = false;
+            }, previewTime);
+        }
+
+        difficultyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                difficultyBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                cardCount = parseInt(btn.dataset.cards);
+                if (cardCount > allCardData.length * 2) {
+                    cardCount = allCardData.length * 2;
+                }
+                createBoard();
+            });
+        });
+
+        startGameBtn.addEventListener('click', startGame);
+
+        // --- 事件監聽器：當瀏覽器語音載入完成時，執行 loadVoices ---
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        // 頁面初次載入時，也先執行一次，避免有些瀏覽器已預先載入
+        loadVoices();
+        
+        window.onload = createBoard;
+    </script>
+</body>
+</html>
