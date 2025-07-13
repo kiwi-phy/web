@@ -4,190 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥝</text></svg>">
-    <title>學測高頻單字終極訓練器</title>
+    <title>學測高頻單字訓練器 (智慧平衡音量版)</title>
     <style>
-        :root {
-            --primary-color: #2c5282;
-            --secondary-color: #4a5568;
-            --background-color: #f7fafc;
-            --card-bg-color: #ffffff;
-            --font-color: #2d3748;
-            --border-color: #e2e8f0;
-            --zebra-bg-color: #f8f9fa;
-            --placeholder-color: #a0aec0;
-        }
-        body {
-            font-family: "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
-            line-height: 1.6;
-            color: var(--font-color);
-            background-color: var(--background-color);
-            margin: 0;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .container {
-            max-width: 500px;
-            margin: auto;
-            background: var(--card-bg-color);
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px -2px rgba(0,0,0,0.1);
-        }
-        .header { text-align: center; margin-bottom: 15px; }
-        h1 { color: var(--primary-color); font-size: 1.6em; margin: 10px 0; }
-        
-        .toolbar {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 15px;
-            background-color: var(--zebra-bg-color);
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-        }
-        .session-controls, .mode-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        select, button {
-            border: 1px solid var(--border-color);
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            background-color: white;
-            box-sizing: border-box;
-        }
-        button { color: var(--primary-color); font-weight: 600; }
-        button:hover { background-color: #e2e8f0; transform: translateY(-1px); }
-        button.active { background-color: var(--primary-color); color: #fff; }
-        
-        .button-group { display: flex; gap: 10px; }
-        .button-group button { flex: 1; }
-        
-        /* Table Layout */
-        #vocab-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        #vocab-table td {
-            padding-top: 12px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-        #vocab-table tr:nth-child(even) {
-            background-color: var(--zebra-bg-color);
-        }
-        
-        .english-column {
-            width: 35%;
-            font-weight: 500;
-            color: var(--primary-color);
-            padding-left: 1em; /* Increased padding */
-        }
-        .speaker-column {
-            width: 10%;
-            text-align: center;
-        }
-        .pos-column {
-            width: 15%;
-            text-align: center;
-            color: var(--secondary-color);
-            font-style: italic;
-            font-size: 0.9em;
-        }
-        .definition-column {
-            width: 40%;
-            padding-right: 1em; /* Increased padding */
-            text-align: right;
-        }
-        .speaker-icon {
-            cursor: pointer;
-            font-size: 1.3em;
-            color: var(--primary-color);
-        }
-        .speaker-icon:hover { transform: scale(1.2); }
-        
-        .english-content, .chinese-definition {
-             display: inline-block;
-             min-height: 20px;
-        }
-        
-        .placeholder-text {
-            color: var(--placeholder-color);
-            font-style: italic;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        
-        .placeholder-text:hover {
-            background-color: #eaf2ff;
-            border-radius: 4px;
-            padding: 0 4px;
-            margin: 0 -4px;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-            font-size: 0.9em;
-            color: var(--secondary-color);
-        }
-
+        /* CSS 樣式與之前相同，此處省略以節省空間 */
+        :root { --primary-color: #2c5282; --secondary-color: #4a5568; --background-color: #f7fafc; --card-bg-color: #ffffff; --font-color: #2d3748; --border-color: #e2e8f0; --zebra-bg-color: #f8f9fa; --placeholder-color: #a0aec0; } body { font-family: "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif; line-height: 1.6; color: var(--font-color); background-color: var(--background-color); margin: 0; padding: 10px; box-sizing: border-box; } .container { max-width: 500px; margin: auto; background: var(--card-bg-color); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px -2px rgba(0,0,0,0.1); } .header { text-align: center; margin-bottom: 15px; } h1 { color: var(--primary-color); font-size: 1.6em; margin: 10px 0; } .toolbar { display: flex; flex-direction: column; gap: 15px; padding: 15px; background-color: var(--zebra-bg-color); border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); } .session-controls, .mode-controls { display: flex; flex-direction: column; gap: 10px; } select, button { border: 1px solid var(--border-color); padding: 10px 14px; border-radius: 6px; font-size: 15px; cursor: pointer; transition: all 0.2s ease-in-out; background-color: white; box-sizing: border-box; } button { color: var(--primary-color); font-weight: 600; } button:hover { background-color: #e2e8f0; transform: translateY(-1px); } button.active { background-color: var(--primary-color); color: #fff; } .button-group { display: flex; gap: 10px; } .button-group button { flex: 1; } #vocab-table { width: 100%; border-collapse: collapse; } #vocab-table td { padding-top: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; } #vocab-table tr:nth-child(even) { background-color: var(--zebra-bg-color); } .english-column { width: 35%; font-weight: 500; color: var(--primary-color); padding-left: 1em; } .speaker-column { width: 10%; text-align: center; } .pos-column { width: 15%; text-align: center; color: var(--secondary-color); font-style: italic; font-size: 0.9em; } .definition-column { width: 40%; padding-right: 1em; text-align: right; } .speaker-icon { cursor: pointer; font-size: 1.3em; color: var(--primary-color); transition: transform 0.2s; } .speaker-icon:hover { transform: scale(1.2); } .english-content, .chinese-definition { display: inline-block; min-height: 20px; } .placeholder-text { color: var(--placeholder-color); font-style: italic; cursor: pointer; white-space: nowrap; } .placeholder-text:hover { background-color: #eaf2ff; border-radius: 4px; padding: 0 4px; margin: 0 -4px; } .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.9em; color: var(--secondary-color); }
     </style>
 </head>
 <body>
     <div class="container" id="main-container">
-        <div class="header">
-            <h1>學測高頻單字訓練器</h1>
-        </div>
-
-        <div class="toolbar">
-            <div class="session-controls">
-                <select id="session-select"></select>
-            </div>
-            <div class="mode-controls">
-                <div class="button-group">
-                    <button id="mode-normal" class="active">一般模式</button>
-                    <button id="shuffle-button">順序隨機</button>
-                </div>
-                <div class="button-group">
-                    <button id="mode-test-zh">測驗 (英→中)</button>
-                    <button id="mode-test-en">測驗 (中→英)</button>
-                </div>
-            </div>
-        </div>
-
-        <table id="vocab-table">
-            <tbody id="vocab-body"></tbody>
-        </table>
-
-        <div class="footer">
-            Kiwiphysics © 2025
-        </div>
+        <!-- HTML 結構與之前相同 -->
+        <div class="header"><h1>學測高頻單字訓練器</h1></div>
+        <div class="toolbar"><div class="session-controls"><select id="session-select"></select></div><div class="mode-controls"><div class="button-group"><button id="mode-normal" class="active">一般模式</button><button id="shuffle-button">順序隨機</button></div><div class="button-group"><button id="mode-test-zh">測驗 (英→中)</button><button id="mode-test-en">測驗 (中→英)</button></div></div></div>
+        <table id="vocab-table"><tbody id="vocab-body"></tbody></table>
+        <div class="footer">Kiwiphysics © 2025</div>
     </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- HELPER FUNCTION ---
-    function shuffleArray(array) {
-        // This function shuffles a COPY of the array and returns it.
-        let newArray = [...array];
-        for (let i = newArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-        }
-        return newArray;
-    }
-
-    // --- DATA SOURCE ---
+    // --- 單字列表 ---
     let vocabularyData = [
         { "word": "create", "pos": "v", "definition": "創造" },
         { "word": "thus", "pos": "adv", "definition": "所以" },
@@ -716,129 +551,113 @@ document.addEventListener('DOMContentLoaded', function() {
     { "word": "sensor", "pos": "n", "definition": "感應器" } 
     ];
 
+    // --- 頁面元素與變數 ---
     const vocabBody = document.getElementById('vocab-body');
     const sessionSelect = document.getElementById('session-select');
     const allButtons = document.querySelectorAll('.mode-controls button');
-    
     let currentSessionList = [];
     let fixedSessionOrder = [];
     let currentMode = '';
 
-    function speak(word) {
+    // --- 全新的語音系統：智慧混合 + 音量平衡 ---
+    let fallbackVoice = null;
+
+    function loadAndSetFallbackVoice() {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length === 0) return;
+        
+        // 1. 優先尋找 Samantha
+        fallbackVoice = voices.find(v => v.name.toLowerCase().includes('samantha'));
+
+        // 2. 如果找不到，尋找 Zira
+        if (!fallbackVoice) {
+            fallbackVoice = voices.find(v => v.name.includes('Zira'));
+        }
+        
+        // 3. 如果再找不到，尋找任何美式女聲
+        if (!fallbackVoice) {
+            fallbackVoice = voices.find(v => v.lang.startsWith('en-US') && v.name.includes('Female'));
+        }
+
+        // 4. 最終備案
+        if (!fallbackVoice) {
+            fallbackVoice = voices.find(v => v.lang.startsWith('en-US'));
+        }
+
+        if (fallbackVoice) {
+            console.log("已指定備用女聲:", fallbackVoice.name);
+        }
+    }
+
+    speechSynthesis.onvoiceschanged = loadAndSetFallbackVoice;
+    loadAndSetFallbackVoice();
+
+    function speakWithTTS(word) {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = 'en-US';
+        if (fallbackVoice) {
+            utterance.voice = fallbackVoice;
+        }
+        // TTS 音量設為最大，作為基準
+        utterance.volume = 1.0;
         speechSynthesis.speak(utterance);
     }
 
-    function renderList(wordList, mode) {
-        vocabBody.innerHTML = '';
-        wordList.forEach((item) => {
-            const row = document.createElement('tr');
-            
-            let englishHTML = `<span class="english-content">${item.word}</span>`;
-            if (mode === 'test-mode-en') {
-                englishHTML = `<span class="english-content" data-word="${item.word}"><span class="placeholder-text">[ 顯示英文 ]</span></span>`;
+    function speak(word) {
+        const cleanWord = word.trim().toLowerCase();
+        if (cleanWord.length === 0 || !/^[a-z-]+$/.test(cleanWord)) {
+            speakWithTTS(word);
+            return;
+        }
+        const audioUrl = `https://dictionary.cambridge.org/media/english-chinese-simplified/us_pron/${cleanWord.charAt(0)}/${cleanWord.substring(0, 3)}/${cleanWord.substring(0, 5)}/${cleanWord}.mp3`;
+        const audio = new Audio(audioUrl);
+        
+        // ✨✨✨ 音量平衡的關鍵 ✨✨✨
+        // 將較大聲的真人MP3音量調降，以匹配TTS的音量
+        audio.volume = 0.75; 
+
+        let fallbackTimer;
+        let hasPlayed = false;
+
+        fallbackTimer = setTimeout(() => {
+            if (!hasPlayed) {
+                audio.src = ''; 
+                speakWithTTS(word);
             }
+        }, 800);
 
-            let definitionHTML = `<span class="chinese-definition">${item.definition}</span>`;
-            if (mode === 'test-mode-zh') {
-                definitionHTML = `<span class="chinese-definition" data-definition="${item.definition}"><span class="placeholder-text">[ 顯示中文 ]</span></span>`;
+        audio.addEventListener('canplaythrough', () => {
+            if (!hasPlayed) {
+                hasPlayed = true;
+                clearTimeout(fallbackTimer);
+                audio.play();
             }
+        });
 
-            row.innerHTML = `
-                <td class="english-column">${englishHTML}</td>
-                <td class="speaker-column">
-                    <span class="speaker-icon" title="發音">🔊</span>
-                </td>
-                <td class="pos-column">${item.pos}</td>
-                <td class="definition-column">${definitionHTML}</td>
-            `;
-            
-            row.querySelector('.speaker-icon').addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                speak(item.word);
-            });
-
-            row.querySelector('.english-column').addEventListener('click', (e) => {
-                const contentSpan = e.currentTarget.querySelector('.english-content');
-                if (contentSpan && contentSpan.dataset.word) {
-                    contentSpan.textContent = contentSpan.dataset.word;
-                    contentSpan.removeAttribute('data-word');
-                }
-            });
-            
-            row.querySelector('.definition-column').addEventListener('click', (e) => {
-                const contentSpan = e.currentTarget.querySelector('.chinese-definition');
-                if (contentSpan && contentSpan.dataset.definition) {
-                    contentSpan.textContent = contentSpan.dataset.definition;
-                    contentSpan.removeAttribute('data-definition');
-                }
-            });
-
-            vocabBody.appendChild(row);
+        audio.addEventListener('error', () => {
+            if (!hasPlayed) {
+                hasPlayed = true;
+                clearTimeout(fallbackTimer);
+                speakWithTTS(word);
+            }
         });
     }
 
-    function createSessionDropdown() {
-        const totalWords = vocabularyData.length;
-        const wordsPerSession = 20; // Changed to 20
-        const numSessions = Math.ceil(totalWords / wordsPerSession);
-
-        for (let i = 0; i < numSessions; i++) {
-            const option = document.createElement('option');
-            const start = i * wordsPerSession;
-            const end = Math.min(start + wordsPerSession, totalWords);
-            option.value = `${start},${end}`;
-            option.textContent = `第 ${i + 1} 回 ( ${start + 1} - ${end})`;
-            sessionSelect.appendChild(option);
-        }
-    }
-
-    function loadSession() {
-        const [start, end] = sessionSelect.value.split(',').map(Number);
-        fixedSessionOrder = vocabularyData.slice(start, end);
-        currentSessionList = [...fixedSessionOrder];
-        setMode('');
-    }
-
-    function shuffleCurrentSession() {
-        currentSessionList = shuffleArray(currentSessionList);
-        renderList(currentSessionList, currentMode);
-    }
-
-    function setMode(modeClass) {
-        currentMode = modeClass; 
-        
-        allButtons.forEach(btn => btn.classList.remove('active'));
-        if (modeClass === 'test-mode-zh') {
-            document.getElementById('mode-test-zh').classList.add('active');
-        } else if (modeClass === 'test-mode-en') {
-            document.getElementById('mode-test-en').classList.add('active');
-        } else {
-            document.getElementById('mode-normal').classList.add('active');
-        }
-        
-        renderList(currentSessionList, currentMode);
-    }
-
-    // --- INITIALIZATION ---
-    // NO GLOBAL SHUFFLE. The order is now fixed as it is in the array.
+    // --- 以下為頁面渲染與控制邏輯 (保持不變) ---
+    function shuffleArray(array) { let newArray = [...array]; for (let i = newArray.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [newArray[i], newArray[j]] = [newArray[j], newArray[i]]; } return newArray; }
+    function renderList(wordList, mode) { vocabBody.innerHTML = ''; wordList.forEach((item) => { const row = document.createElement('tr'); let englishHTML = `<span class="english-content">${item.word}</span>`; if (mode === 'test-mode-en') { englishHTML = `<span class="english-content" data-word="${item.word}"><span class="placeholder-text">[ 顯示英文 ]</span></span>`; } let definitionHTML = `<span class="chinese-definition">${item.definition}</span>`; if (mode === 'test-mode-zh') { definitionHTML = `<span class="chinese-definition" data-definition="${item.definition}"><span class="placeholder-text">[ 顯示中文 ]</span></span>`; } row.innerHTML = `<td class="english-column">${englishHTML}</td><td class="speaker-column"><span class="speaker-icon" title="發音">🔊</span></td><td class="pos-column">${item.pos}</td><td class="definition-column">${definitionHTML}</td>`; row.querySelector('.speaker-icon').addEventListener('click', (e) => { e.stopPropagation(); speak(item.word); }); row.querySelector('.english-column').addEventListener('click', (e) => { const contentSpan = e.currentTarget.querySelector('.english-content'); if (contentSpan && contentSpan.dataset.word) { contentSpan.textContent = contentSpan.dataset.word; contentSpan.removeAttribute('data-word'); } }); row.querySelector('.definition-column').addEventListener('click', (e) => { const contentSpan = e.currentTarget.querySelector('.chinese-definition'); if (contentSpan && contentSpan.dataset.definition) { contentSpan.textContent = contentSpan.dataset.definition; contentSpan.removeAttribute('data-definition'); } }); vocabBody.appendChild(row); }); }
+    function createSessionDropdown() { const totalWords = vocabularyData.length; const wordsPerSession = 20; const numSessions = Math.ceil(totalWords / wordsPerSession); for (let i = 0; i < numSessions; i++) { const option = document.createElement('option'); const start = i * wordsPerSession; const end = Math.min(start + wordsPerSession, totalWords); option.value = `${start},${end}`; option.textContent = `第 ${i + 1} 回 ( ${start + 1} - ${end} )`; sessionSelect.appendChild(option); } }
+    function loadSession() { const [start, end] = sessionSelect.value.split(',').map(Number); fixedSessionOrder = vocabularyData.slice(start, end); currentSessionList = [...fixedSessionOrder]; setMode(''); }
+    function shuffleCurrentSession() { currentSessionList = shuffleArray(currentSessionList); renderList(currentSessionList, currentMode); }
+    function setMode(modeClass) { currentMode = modeClass; allButtons.forEach(btn => btn.classList.remove('active')); if (modeClass === 'test-mode-zh') { document.getElementById('mode-test-zh').classList.add('active'); } else if (modeClass === 'test-mode-en') { document.getElementById('mode-test-en').classList.add('active'); } else { document.getElementById('mode-normal').classList.add('active'); } renderList(currentSessionList, currentMode); }
     
-    // Assign permanent IDs.
-    vocabularyData.forEach((item, index) => item.id = index + 1); 
+    // 初始化
+    if (vocabularyData.length < 10) { console.warn("提醒：目前的單字列表不完整，請貼上您完整的單字列表。"); }
+    vocabularyData.forEach((item, index) => item.id = index + 1); createSessionDropdown(); loadSession();
     
-    createSessionDropdown();
-    loadSession();
-    
-    // --- EVENT LISTENERS ---
-    sessionSelect.addEventListener('change', loadSession);
-    document.getElementById('shuffle-button').addEventListener('click', shuffleCurrentSession);
-    
-    document.getElementById('mode-normal').addEventListener('click', () => {
-        currentSessionList = [...fixedSessionOrder];
-        setMode('');
-    });
+    // 事件監聽
+    sessionSelect.addEventListener('change', loadSession); document.getElementById('shuffle-button').addEventListener('click', shuffleCurrentSession);
+    document.getElementById('mode-normal').addEventListener('click', () => { currentSessionList = [...fixedSessionOrder]; setMode(''); });
     document.getElementById('mode-test-zh').addEventListener('click', () => setMode('test-mode-zh'));
     document.getElementById('mode-test-en').addEventListener('click', () => setMode('test-mode-en'));
 });
