@@ -87,7 +87,7 @@
             width: 35%;
             font-weight: 500;
             color: var(--primary-color);
-            padding-left: 2em; /* Increased padding */
+            padding-left: 1em; /* Increased padding */
         }
         .speaker-column {
             width: 10%;
@@ -102,7 +102,7 @@
         }
         .definition-column {
             width: 40%;
-            padding-right: 2em; /* Increased padding */
+            padding-right: 1em; /* Increased padding */
             text-align: right;
         }
         .speaker-icon {
@@ -790,7 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const start = i * wordsPerSession;
             const end = Math.min(start + wordsPerSession, totalWords);
             option.value = `${start},${end}`;
-            option.textContent = `第 ${i + 1} 回 (單字 ${start + 1} - ${end})`;
+            option.textContent = `第 ${i + 1} 回 (${start + 1} - ${end})`;
             sessionSelect.appendChild(option);
         }
     }
