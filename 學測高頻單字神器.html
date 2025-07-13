@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥝</text></svg>">
+    <title>學測高頻單字終極訓練器</title>
+    <style>
+        :root {
+            --primary-color: #2c5282;
+            --secondary-color: #4a5568;
+            --background-color: #f7fafc;
+            --card-bg-color: #ffffff;
+            --font-color: #2d3748;
+            --border-color: #e2e8f0;
+            --zebra-bg-color: #f8f9fa;
+            --placeholder-color: #a0aec0;
+        }
+        body {
+            font-family: "Helvetica Neue", Arial, "PingFang TC", "Microsoft JhengHei", sans-serif;
+            line-height: 1.6;
+            color: var(--font-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: var(--card-bg-color);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px -2px rgba(0,0,0,0.1);
+        }
+        .header { text-align: center; margin-bottom: 15px; }
+        h1 { color: var(--primary-color); font-size: 1.6em; margin: 10px 0; }
+        
+        .toolbar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            background-color: var(--zebra-bg-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .session-controls, .mode-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        select, button {
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background-color: white;
+            box-sizing: border-box;
+        }
+        button { color: var(--primary-color); font-weight: 600; }
+        button:hover { background-color: #e2e8f0; transform: translateY(-1px); }
+        button.active { background-color: var(--primary-color); color: #fff; }
+        
+        .button-group { display: flex; gap: 10px; }
+        .button-group button { flex: 1; }
+        
+        /* Table Layout */
+        #vocab-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #vocab-table td {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        #vocab-table tr:nth-child(even) {
+            background-color: var(--zebra-bg-color);
+        }
+        
+        .english-column {
+            width: 35%;
+            font-weight: 500;
+            color: var(--primary-color);
+            padding-left: 2em; /* Increased padding */
+        }
+        .speaker-column {
+            width: 10%;
+            text-align: center;
+        }
+        .pos-column {
+            width: 15%;
+            text-align: center;
+            color: var(--secondary-color);
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        .definition-column {
+            width: 40%;
+            padding-right: 2em; /* Increased padding */
+            text-align: right;
+        }
+        .speaker-icon {
+            cursor: pointer;
+            font-size: 1.3em;
+            color: var(--primary-color);
+        }
+        .speaker-icon:hover { transform: scale(1.2); }
+        
+        .english-content, .chinese-definition {
+             display: inline-block;
+             min-height: 20px;
+        }
+        
+        .placeholder-text {
+            color: var(--placeholder-color);
+            font-style: italic;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .placeholder-text:hover {
+            background-color: #eaf2ff;
+            border-radius: 4px;
+            padding: 0 4px;
+            margin: 0 -4px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9em;
+            color: var(--secondary-color);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container" id="main-container">
+        <div class="header">
+            <h1>學測高頻單字訓練器</h1>
+        </div>
+
+        <div class="toolbar">
+            <div class="session-controls">
+                <select id="session-select"></select>
+            </div>
+            <div class="mode-controls">
+                <div class="button-group">
+                    <button id="mode-normal" class="active">一般模式</button>
+                    <button id="shuffle-button">🔀 順序隨機</button>
+                </div>
+                <div class="button-group">
+                    <button id="mode-test-zh">測驗 (英→中)</button>
+                    <button id="mode-test-en">測驗 (中→英)</button>
+                </div>
+            </div>
+        </div>
+
+        <table id="vocab-table">
+            <tbody id="vocab-body"></tbody>
+        </table>
+
+        <div class="footer">
+            Kiwiphysics © 2025
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- HELPER FUNCTION ---
+    function shuffleArray(array) {
+        // This function shuffles a COPY of the array and returns it.
+        let newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
+    // --- DATA SOURCE ---
+    let vocabularyData = [
+        { "word": "create", "pos": "v", "definition": "創造" },
+        { "word": "thus", "pos": "adv", "definition": "所以" },
+        { "word": "being", "pos": "n", "definition": "存在；生物" },
+        { "word": "lullaby", "pos": "n", "definition": "搖籃曲" },
+        { "word": "mainly", "pos": "adv", "definition": "主要地" },
+        { "word": "passage", "pos": "n", "definition": "文章；訊息；旅行" },
+        { "word": "pole", "pos": "n", "definition": "竿子；(南北)極" },
+        { "word": "researcher", "pos": "n", "definition": "研究員" },
+        { "word": "statement", "pos": "n", "definition": "聲明" },
+        { "word": "stool", "pos": "n", "definition": "糞便；凳子" },
+        { "word": "marine", "pos": "adj", "definition": "海洋的" },
+        { "word": "olive", "pos": "n", "definition": "橄欖" },
+        { "word": "dimple", "pos": "n", "definition": "酒窩" },
+        { "word": "flip-flop", "pos": "n", "definition": "夾腳拖" },
+        { "word": "seawater", "pos": "n", "definition": "海水" },
+        { "word": "base", "pos": "v", "definition": "以某處為總部；以…為基礎" },
+        { "word": "cabinet", "pos": "n", "definition": "衣櫥；內閣" },
+        { "word": "claim", "pos": "v", "definition": "宣稱" },
+        { "word": "consider", "pos": "v", "definition": "考慮" },
+        { "word": "effect", "pos": "n", "definition": "影響" },
+        { "word": "force", "pos": "v", "definition": "強迫" },
+        { "word": "material", "pos": "n", "definition": "材料" },
+        { "word": "means", "pos": "n", "definition": "手段" },
+        { "word": "offer", "pos": "v", "definition": "提供" },
+        { "word": "official", "pos": "adj", "definition": "官方的" },
+        { "word": "official", "pos": "n", "definition": "官員" },
+        { "word": "quality", "pos": "n", "definition": "品質" },
+        { "word": "serve", "pos": "v", "definition": "服務；上菜" },
+        { "word": "service", "pos": "n", "definition": "服務" },
+        { "word": "track", "pos": "n", "definition": "軌道；小徑" },
+        { "word": "track", "pos": "v", "definition": "跟蹤；追蹤" },
+        { "word": "behavior", "pos": "n", "definition": "行為" },
+        { "word": "device", "pos": "n", "definition": "設備" },
+        { "word": "disease", "pos": "n", "definition": "疾病" },
+        { "word": "due", "pos": "adj", "definition": "到期的" },
+        { "word": "fortune", "pos": "n", "definition": "財富；好運" },
+        { "word": "heal", "pos": "v", "definition": "康復" },
+        { "word": "invention", "pos": "n", "definition": "發明" },
+        { "word": "leather", "pos": "n", "definition": "皮革" },
+        { "word": "paragraph", "pos": "n", "definition": "段落" },
+        { "word": "pilot", "pos": "n", "definition": "飛行員" },
+        { "word": "plastic", "pos": "n/adj", "definition": "塑膠的" },
+        { "word": "port", "pos": "n", "definition": "港口" },
+        { "word": "research", "pos": "n/v", "definition": "研究" },
+        { "word": "tropical", "pos": "adj", "definition": "熱帶的" },
+        { "word": "violence", "pos": "n", "definition": "暴力" },
+        { "word": "virgin", "pos": "n", "definition": "處女/處男" },
+        { "word": "lyric", "pos": "n", "definition": "歌詞" },
+        { "word": "sandal", "pos": "n", "definition": "涼鞋" },
+        { "word": "stripe", "pos": "n", "definition": "條紋" },
+        { "word": "blood-type", "pos": "n", "definition": "血型" },
+        { "word": "earworm", "pos": "n", "definition": "卡在腦袋的歌；餘音繚繞" },
+        { "word": "fogger", "pos": "n", "definition": "水煙殺蟲劑" },
+        { "word": "lucid", "pos": "adj", "definition": "清醒的；清楚易懂的" },
+        { "word": "method", "pos": "n", "definition": "方法" },
+        { "word": "recent", "pos": "adj", "definition": "最近" },
+        { "word": "region", "pos": "n", "definition": "地區" },
+        { "word": "simply", "pos": "adv", "definition": "僅僅" },
+        { "word": "symbol", "pos": "n", "definition": "象徵" },
+        { "word": "carve", "pos": "v", "definition": "雕刻" },
+        { "word": "ceremony", "pos": "n", "definition": "儀式" },
+        { "word": "evidence", "pos": "n", "definition": "證據" },
+        { "word": "feature", "pos": "n/v", "definition": "特徵" },
+        { "word": "flavor", "pos": "n", "definition": "口味" },
+        { "word": "fur", "pos": "n", "definition": "毛皮" },
+        { "word": "greatly", "pos": "adv", "definition": "非常" },
+        { "word": "issue", "pos": "n", "definition": "議題；(報刊)期號" },
+        { "word": "issue", "pos": "v", "definition": "發行；發布" },
+        { "word": "melody", "pos": "n", "definition": "旋律" },
+        { "word": "mention", "pos": "v", "definition": "提到" },
+        { "word": "related", "pos": "adj", "definition": "有關的" },
+        { "word": "security", "pos": "n", "definition": "安全" },
+        { "word": "symptom", "pos": "n", "definition": "症狀" },
+        { "word": "technique", "pos": "n", "definition": "技術" },
+        { "word": "various", "pos": "adj", "definition": "多樣的" },
+        { "word": "attached", "pos": "adj", "definition": "附加的" },
+        { "word": "pesticide", "pos": "n", "definition": "殺蟲劑" },
+        { "word": "bedbug", "pos": "n", "definition": "臭蟲；床蝨" },
+        { "word": "cognitive", "pos": "adj", "definition": "認知的" },
+        { "word": "desalinate", "pos": "v", "definition": "把海水淡化" },
+        { "word": "desalination", "pos": "n", "definition": "海水淡化" },
+        { "word": "polygraph", "pos": "n", "definition": "測謊器" },
+        { "word": "area", "pos": "n", "definition": "區域" },
+        { "word": "artist", "pos": "n", "definition": "藝術家" },
+        { "word": "barking", "pos": "n", "definition": "(狗)叫聲" },
+        { "word": "encourage", "pos": "v", "definition": "鼓勵" },
+        { "word": "insect", "pos": "n", "definition": "昆蟲" },
+        { "word": "addition", "pos": "n", "definition": "添加；加法" },
+        { "word": "advantage", "pos": "n", "definition": "優點" },
+        { "word": "allow", "pos": "v", "definition": "允許" },
+        { "word": "attend", "pos": "v", "definition": "出席" },
+        { "word": "belief", "pos": "n", "definition": "信仰" },
+        { "word": "bomb", "pos": "n", "definition": "炸彈" },
+        { "word": "career", "pos": "n", "definition": "職涯" },
+        { "word": "case", "pos": "n", "definition": "案件；情況" },
+        { "word": "commonly", "pos": "adv", "definition": "經常地；通常" },
+        { "word": "completely", "pos": "adv", "definition": "完全地" },
+        { "word": "contain", "pos": "v", "definition": "包含" },
+        { "word": "county", "pos": "n", "definition": "縣；郡" },
+        { "word": "crisis", "pos": "n", "definition": "危機" },
+        { "word": "culture", "pos": "n", "definition": "文化" },
+        { "word": "degree", "pos": "n", "definition": "度；學位" },
+        { "word": "entire", "pos": "adj", "definition": "整個的" },
+        { "word": "expert", "pos": "n", "definition": "專家" },
+        { "word": "function", "pos": "n", "definition": "功能；運作" },
+        { "word": "further", "pos": "adj", "definition": "進一步" },
+        { "word": "generation", "pos": "n", "definition": "世代" },
+        { "word": "human", "pos": "n", "definition": "人類" },
+        { "word": "individual", "pos": "n", "definition": "個人" },
+        { "word": "individual", "pos": "adj", "definition": "個人的" },
+        { "word": "industry", "pos": "n", "definition": "產業" },
+        { "word": "instance", "pos": "n", "definition": "例子；情況" },
+        { "word": "member", "pos": "n", "definition": "成員" },
+        { "word": "mile", "pos": "n", "definition": "英里" },
+        { "word": "organization", "pos": "n", "definition": "組織" },
+        { "word": "particular", "pos": "adj", "definition": "特定的" },
+        { "word": "pattern", "pos": "n", "definition": "模式" },
+        { "word": "place", "pos": "v", "definition": "放置" },
+        { "word": "population", "pos": "n", "definition": "人口" },
+        { "word": "prefer", "pos": "v", "definition": "比較喜歡" },
+        { "word": "product", "pos": "n", "definition": "產品" },
+        { "word": "protection", "pos": "n", "definition": "保護" },
+        { "word": "raise", "pos": "v", "definition": "提高；撫養" },
+        { "word": "range", "pos": "n", "definition": "範圍" },
+        { "word": "require", "pos": "v", "definition": "要求" },
+        { "word": "result", "pos": "n", "definition": "結果" },
+        { "word": "result", "pos": "v", "definition": "in 導致; from 由...導致" },
+        { "word": "return", "pos": "v", "definition": "回到" },
+        { "word": "skill", "pos": "n", "definition": "技能" },
+        { "word": "speaker", "pos": "n", "definition": "喇叭；演講者" },
+        { "word": "spot", "pos": "n", "definition": "斑點；地點" },
+        { "word": "style", "pos": "n", "definition": "風格" },
+        { "word": "supply", "pos": "n/v", "definition": "供應" },
+        { "word": "use", "pos": "n", "definition": "用途" },
+        { "word": "annoying", "pos": "adj", "definition": "惱人的" },
+        { "word": "annual", "pos": "adj", "definition": "年度的" },
+        { "word": "artistic", "pos": "adj", "definition": "藝術的" },
+        { "word": "attitude", "pos": "n", "definition": "態度" },
+        { "word": "attract", "pos": "v", "definition": "吸引" },
+        { "word": "author", "pos": "n", "definition": "作者" },
+        { "word": "bacteria", "pos": "n", "definition": "細菌" },
+        { "word": "balance", "pos": "n", "definition": "平衡" },
+        { "word": "capture", "pos": "v", "definition": "捕獲" },
+        { "word": "characteristic", "pos": "n", "definition": "特性；個性" },
+        { "word": "chemistry", "pos": "n", "definition": "化學" },
+        { "word": "chemical", "pos": "adj", "definition": "化學的" },
+        { "word": "civil", "pos": "adj", "definition": "國民的；公民的" },
+        { "word": "condition", "pos": "n", "definition": "條件；狀況" },
+        { "word": "consequence", "pos": "n", "definition": "後果" },
+        { "word": "construction", "pos": "n", "definition": "施工；建設" },
+        { "word": "contest", "pos": "n", "definition": "比賽" },
+        { "word": "contrast", "pos": "n/v", "definition": "對比" },
+        { "word": "creature", "pos": "n", "definition": "生物" },
+        { "word": "crown", "pos": "n", "definition": "王冠" },
+        { "word": "cultural", "pos": "adj", "definition": "文化的" },
+        { "word": "declare", "pos": "v", "definition": "聲明" },
+        { "word": "despite", "pos": "prep", "definition": "儘管" },
+        { "word": "developed", "pos": "adj", "definition": "已開發的" },
+        { "word": "development", "pos": "n", "definition": "發展" },
+        { "word": "dock", "pos": "v", "definition": "停靠船舶；碼頭" },
+        { "word": "doubtful", "pos": "adj", "definition": "懷疑的" },
+        { "word": "drop", "pos": "v", "definition": "落下；下降" },
+        { "word": "drop", "pos": "n", "definition": "滴；一點點" },
+        { "word": "economic", "pos": "adj", "definition": "跟經濟有關的" },
+        { "word": "employee", "pos": "n", "definition": "員工" },
+        { "word": "environmental", "pos": "adj", "definition": "環境的" },
+        { "word": "expose", "pos": "v", "definition": "暴露" },
+        { "word": "finding", "pos": "n", "definition": "發現" },
+        { "word": "generally", "pos": "adv", "definition": "通常；普遍地" },
+        { "word": "goods", "pos": "n", "definition": "產品；貨物" },
+        { "word": "harbor", "pos": "n", "definition": "港口" },
+        { "word": "infected", "pos": "adj", "definition": "受感染的" },
+        { "word": "install", "pos": "v", "definition": "安裝" },
+        { "word": "instead", "pos": "adv", "definition": "取而代之" },
+        { "word": "intelligence", "pos": "n", "definition": "智慧" },
+        { "word": "involve", "pos": "v", "definition": "參與；使捲入" },
+        { "word": "knob", "pos": "n", "definition": "門把" },
+        { "word": "labor", "pos": "n", "definition": "勞工" },
+        { "word": "labor", "pos": "v", "definition": "分娩；勞動" },
+        { "word": "laboratory", "pos": "n", "definition": "實驗室" },
+        { "word": "lasting", "pos": "adj", "definition": "持久的" },
+        { "word": "limited", "pos": "adj", "definition": "有限的" },
+        { "word": "measure", "pos": "n", "definition": "措施" },
+        { "word": "measure", "pos": "v", "definition": "測量" },
+        { "word": "memorial", "pos": "adj", "definition": "紀念的" },
+        { "word": "minister", "pos": "n", "definition": "部長" },
+        { "word": "numerous", "pos": "adj", "definition": "眾多的" },
+        { "word": "objective", "pos": "adj", "definition": "客觀的" },
+        { "word": "occupy", "pos": "v", "definition": "佔據" },
+        { "word": "origin", "pos": "n", "definition": "起源" },
+        { "word": "participant", "pos": "n", "definition": "參與者" },
+        { "word": "particularly", "pos": "adv", "definition": "尤其" },
+        { "word": "perform", "pos": "v", "definition": "表演；執行" },
+        { "word": "performance", "pos": "n", "definition": "表現；表演" },
+        { "word": "permanent", "pos": "adj", "definition": "永久的" },
+        { "word": "phrase", "pos": "n", "definition": "片語" },
+        { "word": "produce", "pos": "v", "definition": "生產" },
+        { "word": "produce", "pos": "n", "definition": "農產品" },
+        { "word": "promote", "pos": "v", "definition": "促進；促銷；升遷" },
+        { "word": "pure", "pos": "adj", "definition": "純的" },
+        { "word": "purpose", "pos": "n", "definition": "目的" },
+        { "word": "react", "pos": "v", "definition": "反應" },
+        { "word": "reduce", "pos": "v", "definition": "降低" },
+        { "word": "refer", "pos": "v", "definition": "參考；提及" },
+        { "word": "relationship", "pos": "n", "definition": "關係" },
+        { "word": "release", "pos": "v", "definition": "釋放；推出" },
+        { "word": "remove", "pos": "v", "definition": "去除" },
+        { "word": "replace", "pos": "v", "definition": "替換；取代" },
+        { "word": "resident", "pos": "n", "definition": "居民" },
+        { "word": "resource", "pos": "n", "definition": "資源" },
+        { "word": "rid", "pos": "v", "definition": "擺脫" },
+        { "word": "risk", "pos": "n/v", "definition": "風險；冒險" },
+        { "word": "scientific", "pos": "adj", "definition": "科學的" },
+        { "word": "shame", "pos": "n", "definition": "恥辱" },
+        { "word": "situation", "pos": "n", "definition": "情況" },
+        { "word": "sneeze", "pos": "n/v", "definition": "噴嚏" },
+        { "word": "specific", "pos": "adj", "definition": "特定的" },
+        { "word": "state", "pos": "n", "definition": "狀態；州" },
+        { "word": "suffering", "pos": "adj", "definition": "受苦的" },
+        { "word": "suffering", "pos": "n", "definition": "痛苦；折磨" },
+        { "word": "surrounded", "pos": "adj", "definition": "被包圍的" },
+        { "word": "temporary", "pos": "adj", "definition": "暫時的" },
+        { "word": "tend", "pos": "v", "definition": "傾向" },
+        { "word": "tide", "pos": "n", "definition": "浪潮" },
+        { "word": "transform", "pos": "v", "definition": "改造；改變" },
+        { "word": "tune", "pos": "n/v", "definition": "曲調；為...調音" },
+        { "word": "typical", "pos": "adj", "definition": "典型的" },
+        { "word": "vessel", "pos": "n", "definition": "船隻；血管" },
+        { "word": "virus", "pos": "n", "definition": "病毒" },
+        { "word": "aboriginal", "pos": "adj", "definition": "原住民的" },
+        { "word": "clan", "pos": "n", "definition": "氏族" },
+        { "word": "coastal", "pos": "adj", "definition": "沿海的" },
+        { "word": "collision", "pos": "n", "definition": "相撞；牴觸" },
+        { "word": "creativity", "pos": "n", "definition": "創造力" },
+        { "word": "displace", "pos": "v", "definition": "位移；脫臼" },
+        { "word": "eyelid", "pos": "n", "definition": "眼皮" },
+        { "word": "gender", "pos": "n", "definition": "性別" },
+        { "word": "gland", "pos": "n", "definition": "腺體" },
+        { "word": "hinge", "pos": "n", "definition": "鉸鏈" },
+        { "word": "innovative", "pos": "adj", "definition": "創新的" },
+        { "word": "martial", "pos": "adj", "definition": "軍隊的" },
+        { "word": "popularity", "pos": "n", "definition": "流行" },
+        { "word": "profile", "pos": "n", "definition": "簡介；輪廓" },
+        { "word": "strap", "pos": "n", "definition": "背帶；帶子" },
+        { "word": "stuck", "pos": "adj", "definition": "卡住的" },
+        { "word": "tattoo", "pos": "n", "definition": "刺青" },
+        { "word": "trait", "pos": "n", "definition": "特徵" },
+        { "word": "acidity", "pos": "n", "definition": "酸度" },
+        { "word": "charmer", "pos": "n", "definition": "迷人的人" },
+        { "word": "dehydration", "pos": "n", "definition": "脫水" },
+        { "word": "footwear", "pos": "n", "definition": "鞋子(總稱)" },
+        { "word": "homer", "pos": "n", "definition": "本壘打；傳信鴿" },
+        { "word": "illustrator", "pos": "n", "definition": "插畫家" },
+        { "word": "inaugural", "pos": "adj", "definition": "就職的" },
+        { "word": "kidnapper", "pos": "n", "definition": "綁匪" },
+        { "word": "medicinal", "pos": "adj", "definition": "藥用的" },
+        { "word": "Syria", "pos": "n", "definition": "敘利亞" },
+        { "word": "Texas", "pos": "n", "definition": "德州" },
+
+    { "word": "shell", "pos": "n", "definition": "庇護所" },
+    { "word": "process", "pos": "n", "definition": "過程" },
+    { "word": "accordingly", "pos": "adv", "definition": "因此" },
+    { "word": "readily", "pos": "adv", "definition": "輕易地" },
+    { "word": "remote", "pos": "adj", "definition": "遙遠的" },
+    { "word": "event", "pos": "n", "definition": "事件" },
+    { "word": "alert", "pos": "adj/n", "definition": "警覺的；警報" },
+    { "word": "eventually", "pos": "adv", "definition": "最終" },
+    { "word": "reserved", "pos": "adj", "definition": "預訂的；內向的" },
+    { "word": "bond", "pos": "n", "definition": "聯繫；債券" },
+    { "word": "visual", "pos": "adj", "definition": "視覺的" },
+    { "word": "strip", "pos": "n/v", "definition": "條；剝去" },
+    { "word": "high-ranking", "pos": "adj", "definition": "高階的" },
+    { "word": "financial", "pos": "adj", "definition": "金融的" },
+    { "word": "smooth", "pos": "adj", "definition": "平滑的" },
+    { "word": "nowadays", "pos": "adv", "definition": "現今" },
+    { "word": "shortages", "pos": "n", "definition": "短缺(複數)" },
+    { "word": "burial", "pos": "n", "definition": "埋葬" },
+    { "word": "currently", "pos": "adv", "definition": "目前" },
+    { "word": "questionnaire", "pos": "n", "definition": "問卷" },
+    { "word": "descriptive", "pos": "adj", "definition": "描述性的" },
+    { "word": "trigger", "pos": "v/n", "definition": "引發；板機" },
+    { "word": "panic", "pos": "n/v", "definition": "恐慌" },
+    { "word": "railways", "pos": "n", "definition": "鐵路(系統)" },
+    { "word": "wandering", "pos": "adj/n", "definition": "漫遊的；徘徊" },
+    { "word": "Babylonian", "pos": "n/adj", "definition": "巴比倫人(的)" },
+    { "word": "entertainment", "pos": "n", "definition": "娛樂" },
+    { "word": "solid", "pos": "adj", "definition": "固體的；堅固的" },
+    { "word": "disappear", "pos": "v", "definition": "消失" },
+    { "word": "Arabia", "pos": "n", "definition": "阿拉伯" },
+    { "word": "constant", "pos": "adj", "definition": "持續的" },
+    { "word": "hometown", "pos": "n", "definition": "家鄉" },
+    { "word": "medal", "pos": "n", "definition": "獎牌" },
+    { "word": "suffer", "pos": "v", "definition": "遭受" },
+    { "word": "saw", "pos": "n/v", "definition": "鋸子；鋸" },
+    { "word": "fragile", "pos": "adj", "definition": "易碎的" },
+    { "word": "distribute", "pos": "v", "definition": "分配" },
+    { "word": "assumed", "pos": "adj", "definition": "假定的" },
+    { "word": "adequate", "pos": "adj", "definition": "足夠的" },
+    { "word": "located", "pos": "adj", "definition": "位於" },
+    { "word": "weave", "pos": "v", "definition": "編織" },
+    { "word": "moreover", "pos": "adv", "definition": "此外" },
+    { "word": "angelfish", "pos": "n", "definition": "神仙魚" },
+    { "word": "cargo", "pos": "n", "definition": "貨物" },
+    { "word": "conclude", "pos": "v", "definition": "總結；結束" },
+    { "word": "salary", "pos": "n", "definition": "薪水" },
+    { "word": "wheat", "pos": "n", "definition": "小麥" },
+    { "word": "version", "pos": "n", "definition": "版本" },
+    { "word": "extraordinary", "pos": "adj", "definition": "非凡的" },
+    { "word": "depend", "pos": "v", "definition": "依賴" },
+    { "word": "liberal", "pos": "adj", "definition": "自由的；開明的" },
+    { "word": "account", "pos": "n", "definition": "帳戶；描述" },
+    { "word": "excessive", "pos": "adj", "definition": "過度的" },
+    { "word": "removing", "pos": "v", "definition": "移除(動名詞)" },
+    { "word": "crucial", "pos": "adj", "definition": "關鍵的" },
+    { "word": "ongoing", "pos": "adj", "definition": "進行中的" },
+    { "word": "prospect", "pos": "n", "definition": "前景；可能性" },
+    { "word": "explore", "pos": "v", "definition": "探索" },
+    { "word": "entirely", "pos": "adv", "definition": "完全地" },
+    { "word": "ruined", "pos": "adj", "definition": "毀壞的" },
+    { "word": "predicted", "pos": "adj", "definition": "被預測的" },
+    { "word": "harmless", "pos": "adj", "definition": "無害的" },
+    { "word": "achieve", "pos": "v", "definition": "達成" },
+    { "word": "phenomenon", "pos": "n", "definition": "現象" },
+    { "word": "combination", "pos": "n", "definition": "結合" },
+    { "word": "attract", "pos": "v", "definition": "吸引" },
+    { "word": "refined", "pos": "adj", "definition": "精煉的；優雅的" },
+    { "word": "certainly", "pos": "adv", "definition": "當然" },
+    { "word": "roman", "pos": "n/adj", "definition": "羅馬人(的)" },
+    { "word": "barely", "pos": "adv", "definition": "幾乎不" },
+    { "word": "blame", "pos": "v/n", "definition": "責備；歸咎" },
+    { "word": "comfort", "pos": "n", "definition": "舒適" },
+    { "word": "correctly", "pos": "adv", "definition": "正確地" },
+    { "word": "remain", "pos": "v", "definition": "保持；留下" },
+    { "word": "facility", "pos": "n", "definition": "設施" },
+    { "word": "content", "pos": "n", "definition": "內容" },
+    { "word": "adopted", "pos": "adj", "definition": "被收養的" },
+    { "word": "pimple", "pos": "n", "definition": "青春痘" },
+    { "word": "unusual", "pos": "adj", "definition": "不尋常的" },
+    { "word": "factor", "pos": "n", "definition": "因素" },
+    { "word": "personality", "pos": "n", "definition": "個性" },
+    { "word": "property", "pos": "n", "definition": "財產；特性" },
+    { "word": "unfortunately", "pos": "adv", "definition": "不幸地" },
+    { "word": "Egyptian", "pos": "n/adj", "definition": "埃及人(的)" },
+    { "word": "behalf", "pos": "n", "definition": "代表；利益" },
+    { "word": "political", "pos": "adj", "definition": "政治的" },
+    { "word": "oral", "pos": "adj", "definition": "口頭的" },
+    { "word": "essential", "pos": "adj", "definition": "必要的" },
+    { "word": "prompt", "pos": "adj/v", "definition": "迅速的；促使" },
+    { "word": "danger", "pos": "n", "definition": "危險" },
+    { "word": "immigrant", "pos": "n", "definition": "移民" },
+    { "word": "fooled", "pos": "v", "definition": "被愚弄" },
+    { "word": "normal", "pos": "adj", "definition": "正常的" },
+    { "word": "facial", "pos": "adj", "definition": "臉部的" },
+    { "word": "stock", "pos": "n", "definition": "庫存；股票" },
+    { "word": "convey", "pos": "v", "definition": "傳達；運輸" },
+    { "word": "amazed", "pos": "adj", "definition": "感到驚訝的" },
+    { "word": "vividly", "pos": "adv", "definition": "生動地" },
+    { "word": "flexible", "pos": "adj", "definition": "有彈性的" },
+    { "word": "slave", "pos": "n", "definition": "奴隸" },
+    { "word": "moisture", "pos": "n", "definition": "濕氣" },
+    { "word": "Greek", "pos": "n/adj", "definition": "希臘人(的)" },
+    { "word": "rust", "pos": "n/v", "definition": "鏽；生鏽" },
+    { "word": "advise", "pos": "v", "definition": "建議" },
+    { "word": "experiment", "pos": "n", "definition": "實驗" },
+    { "word": "promotion", "pos": "n", "definition": "促銷；升遷" },
+    { "word": "affect", "pos": "v", "definition": "影響" },
+    { "word": "bride", "pos": "n", "definition": "新娘" },
+    { "word": "resign", "pos": "v", "definition": "辭職" },
+    { "word": "spark", "pos": "n/v", "definition": "火花；引發" },
+    { "word": "function", "pos": "n", "definition": "功能" },
+    { "word": "depict", "pos": "v", "definition": "描繪" },
+    { "word": "emergency", "pos": "n", "definition": "緊急情況" },
+    { "word": "intellect", "pos": "n", "definition": "智力" },
+    { "word": "observed", "pos": "v", "definition": "觀察到(過去式)" },
+    { "word": "signature", "pos": "n", "definition": "簽名" },
+    { "word": "realistic", "pos": "adj", "definition": "現實的" },
+    { "word": "ton", "pos": "n", "definition": "噸" },
+    { "word": "comparative", "pos": "adj", "definition": "比較的" },
+    { "word": "comfortably", "pos": "adv", "definition": "舒適地" },
+    { "word": "enclosed", "pos": "adj", "definition": "封閉的；附上的" },
+    { "word": "indeed", "pos": "adv", "definition": "確實" },
+    { "word": "fund", "pos": "n/v", "definition": "資金；資助" },
+    { "word": "rocky", "pos": "adj", "definition": "多岩的；不穩的" },
+    { "word": "possibly", "pos": "adv", "definition": "可能地" },
+    { "word": "cope", "pos": "v", "definition": "應付" },
+    { "word": "durable", "pos": "adj", "definition": "耐用的" },
+    { "word": "efficiency", "pos": "n", "definition": "效率" },
+    { "word": "structure", "pos": "n", "definition": "結構" },
+    { "word": "composed", "pos": "adj", "definition": "由...組成；沉著的" },
+    { "word": "setting", "pos": "n", "definition": "背景；設定" },
+    { "word": "devoted", "pos": "adj", "definition": "忠實的；投入的" },
+    { "word": "fast-moving", "pos": "adj", "definition": "快速移動的" },
+    { "word": "beam", "pos": "n", "definition": "光束；橫梁" },
+    { "word": "impact", "pos": "n/v", "definition": "衝擊；影響" },
+    { "word": "daydream", "pos": "n/v", "definition": "白日夢" },
+    { "word": "chain", "pos": "n", "definition": "鏈條；連鎖店" },
+    { "word": "eco-friendly", "pos": "adj", "definition": "環保的" },
+    { "word": "conduct", "pos": "v/n", "definition": "進行；行為" },
+    { "word": "groomer", "pos": "n", "definition": "美容師" },
+    { "word": "establish", "pos": "v", "definition": "建立" },
+    { "word": "battle", "pos": "n", "definition": "戰鬥" },
+    { "word": "featuring", "pos": "v", "definition": "以...為特色" },
+    { "word": "theory", "pos": "n", "definition": "理論" },
+    { "word": "associated", "pos": "adj", "definition": "相關的" },
+    { "word": "advantage", "pos": "n", "definition": "優勢" },
+    { "word": "accent", "pos": "n", "definition": "口音" },
+    { "word": "allow", "pos": "v", "definition": "允許" },
+    { "word": "presidency", "pos": "n", "definition": "總統職位/任期" },
+    { "word": "reliable", "pos": "adj", "definition": "可靠的" },
+    { "word": "Iraq", "pos": "n", "definition": "伊拉克" },
+    { "word": "toxic", "pos": "adj", "definition": "有毒的" },
+    { "word": "namely", "pos": "adv", "definition": "也就是說" },
+    { "word": "crushing", "pos": "adj", "definition": "壓倒性的" },
+    { "word": "remains", "pos": "n", "definition": "遺跡；遺體" },
+    { "word": "significantly", "pos": "adv", "definition": "顯著地" },
+    { "word": "qualified", "pos": "adj", "definition": "有資格的" },
+    { "word": "recipe", "pos": "n", "definition": "食譜" },
+    { "word": "strap", "pos": "n", "definition": "帶子" },
+    { "word": "shallower", "pos": "adj", "definition": "較淺的" },
+    { "word": "Einstein", "pos": "n", "definition": "愛因斯坦" },
+    { "word": "desire", "pos": "n/v", "definition": "渴望" },
+    { "word": "commercial", "pos": "adj", "definition": "商業的" },
+    { "word": "threatening", "pos": "adj", "definition": "威脅的" },
+    { "word": "forbidden", "pos": "adj", "definition": "被禁止的" },
+    { "word": "psychologist", "pos": "n", "definition": "心理學家" },
+    { "word": "contemporary", "pos": "adj", "definition": "當代的" },
+    { "word": "additionally", "pos": "adv", "definition": "此外" },
+    { "word": "banker", "pos": "n", "definition": "銀行家" },
+    { "word": "category", "pos": "n", "definition": "類別" },
+    { "word": "significant", "pos": "adj", "definition": "重要的" },
+    { "word": "exhibition", "pos": "n", "definition": "展覽" },
+    { "word": "literally", "pos": "adv", "definition": "字面上地；確實地" },
+    { "word": "primitive", "pos": "adj", "definition": "原始的" },
+    { "word": "precisely", "pos": "adv", "definition": "精確地" },
+    { "word": "germ", "pos": "n", "definition": "病菌" },
+    { "word": "reality", "pos": "n", "definition": "現實" },
+    { "word": "formation", "pos": "n", "definition": "形成" },
+    { "word": "presence", "pos": "n", "definition": "存在；出席" },
+    { "word": "purposes", "pos": "n", "definition": "目的(複數)" },
+    { "word": "react", "pos": "v", "definition": "反應" },
+    { "word": "chief", "pos": "adj/n", "definition": "主要的；首領" },
+    { "word": "decorating", "pos": "n", "definition": "裝飾" },
+    { "word": "acquire", "pos": "v", "definition": "獲得" },
+    { "word": "convince", "pos": "v", "definition": "說服" },
+    { "word": "location", "pos": "n", "definition": "位置" },
+    { "word": "citizen", "pos": "n", "definition": "公民" },
+    { "word": "exposure", "pos": "n", "definition": "暴露" },
+    { "word": "properly", "pos": "adv", "definition": "適當地" },
+    { "word": "root", "pos": "n", "definition": "根" },
+    { "word": "droplet", "pos": "n", "definition": "小滴" },
+    { "word": "bury", "pos": "v", "definition": "埋葬" },
+    { "word": "institution", "pos": "n", "definition": "機構" },
+    { "word": "scent", "pos": "n", "definition": "氣味" },
+    { "word": "illustration", "pos": "n", "definition": "插圖" },
+    { "word": "spread", "pos": "v", "definition": "散播；塗抹" },
+    { "word": "rate", "pos": "n", "definition": "比率；價格" },
+    { "word": "infections", "pos": "n", "definition": "感染(複數)" },
+    { "word": "breaking", "pos": "n/adj", "definition": "破裂；突發的" },
+    { "word": "appeal", "pos": "v/n", "definition": "吸引；呼籲" },
+    { "word": "cooking", "pos": "n", "definition": "烹飪" },
+    { "word": "replay", "pos": "v/n", "definition": "重播" },
+    { "word": "district", "pos": "n", "definition": "地區" },
+    { "word": "equipment", "pos": "n", "definition": "設備" },
+    { "word": "taxed", "pos": "adj", "definition": "被課稅的" },
+    { "word": "capture", "pos": "v", "definition": "捕獲" },
+    { "word": "prevent", "pos": "v", "definition": "預防" },
+    { "word": "otherwise", "pos": "adv", "definition": "否則" },
+    { "word": "severe", "pos": "adj", "definition": "嚴重的" },
+    { "word": "accept", "pos": "v", "definition": "接受" },
+    { "word": "belief", "pos": "n", "definition": "信念；信仰" },
+    { "word": "repeatedly", "pos": "adv", "definition": "重複地" },
+    { "word": "accident", "pos": "n", "definition": "意外" },
+    { "word": "terms", "pos": "n", "definition": "條款；術語" },
+    { "word": "prime", "pos": "adj", "definition": "首要的；優質的" },
+    { "word": "fragment", "pos": "n", "definition": "碎片" },
+    { "word": "attempt", "pos": "v/n", "definition": "嘗試" },
+    { "word": "consist", "pos": "v", "definition": "由...組成" },
+    { "word": "throughout", "pos": "prep/adv", "definition": "遍及；自始至終" },
+    { "word": "snort", "pos": "v", "definition": "用鼻子噴氣" },
+    { "word": "awake", "pos": "adj/v", "definition": "醒著的；喚醒" },
+    { "word": "driven", "pos": "adj", "definition": "驅動的" },
+    { "word": "celebration", "pos": "n", "definition": "慶祝" },
+    { "word": "wartime", "pos": "n", "definition": "戰時" },
+    { "word": "venture", "pos": "n/v", "definition": "冒險；企業" },
+    { "word": "fetch", "pos": "v", "definition": "取來" },
+    { "word": "signal", "pos": "n", "definition": "信號" },
+    { "word": "genetic", "pos": "adj", "definition": "基因的" },
+    { "word": "magnet", "pos": "n", "definition": "磁鐵" },
+    { "word": "representative", "pos": "n", "definition": "代表" },
+    { "word": "officially", "pos": "adv", "definition": "官方地" },
+    { "word": "competition", "pos": "n", "definition": "競爭" },
+    { "word": "global", "pos": "adj", "definition": "全球的" },
+    { "word": "rural", "pos": "adj", "definition": "鄉村的" },
+    { "word": "deceased", "pos": "adj", "definition": "已故的" },
+    { "word": "accuracy", "pos": "n", "definition": "準確性" },
+    { "word": "hound", "pos": "n/v", "definition": "獵犬；追趕" },
+    { "word": "flashing", "pos": "adj", "definition": "閃爍的" },
+    { "word": "designer", "pos": "n", "definition": "設計師" },
+    { "word": "slightly", "pos": "adv", "definition": "稍微地" },
+    { "word": "boost", "pos": "v/n", "definition": "提升；促進" },
+    { "word": "anchoring", "pos": "n", "definition": "錨定；下錨" },
+    { "word": "rail", "pos": "n", "definition": "鐵軌" },
+    { "word": "massive", "pos": "adj", "definition": "巨大的" },
+    { "word": "recognized", "pos": "adj", "definition": "被認可的" },
+    { "word": "interpreted", "pos": "v", "definition": "解釋；詮釋(過去式)" },
+    { "word": "productivity", "pos": "n", "definition": "生產力" },
+    { "word": "discrimination", "pos": "n", "definition": "歧視" },
+    { "word": "carry-on", "pos": "n", "definition": "隨身行李" },
+    { "word": "fiber", "pos": "n", "definition": "纖維" },
+    { "word": "connection", "pos": "n", "definition": "連接" },
+    { "word": "sponge", "pos": "n", "definition": "海綿" },
+    { "word": "spiritual", "pos": "adj", "definition": "精神的" },
+    { "word": "caretaker", "pos": "n", "definition": "看守人" },
+    { "word": "impress", "pos": "v", "definition": "使印象深刻" },
+    { "word": "theme", "pos": "n", "definition": "主題" },
+    { "word": "reveal", "pos": "v", "definition": "揭露" },
+    { "word": "vision", "pos": "n", "definition": "視力；遠見" },
+    { "word": "revolution", "pos": "n", "definition": "革命" },
+    { "word": "conflict", "pos": "n", "definition": "衝突" },
+    { "word": "reflected", "pos": "adj", "definition": "被反射的" },
+    { "word": "assignment", "pos": "n", "definition": "任務；作業" },
+    { "word": "typically", "pos": "adv", "definition": "典型地" },
+    { "word": "pose", "pos": "v/n", "definition": "造成；提出；姿勢" },
+    { "word": "structural", "pos": "adj", "definition": "結構的" },
+    { "word": "sensor", "pos": "n", "definition": "感應器" } 
+    ];
+
+    const vocabBody = document.getElementById('vocab-body');
+    const sessionSelect = document.getElementById('session-select');
+    const allButtons = document.querySelectorAll('.mode-controls button');
+    
+    let currentSessionList = [];
+    let fixedSessionOrder = [];
+    let currentMode = '';
+
+    function speak(word) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = 'en-US';
+        speechSynthesis.speak(utterance);
+    }
+
+    function renderList(wordList, mode) {
+        vocabBody.innerHTML = '';
+        wordList.forEach((item) => {
+            const row = document.createElement('tr');
+            
+            let englishHTML = `<span class="english-content">${item.word}</span>`;
+            if (mode === 'test-mode-en') {
+                englishHTML = `<span class="english-content" data-word="${item.word}"><span class="placeholder-text">[ 顯示英文 ]</span></span>`;
+            }
+
+            let definitionHTML = `<span class="chinese-definition">${item.definition}</span>`;
+            if (mode === 'test-mode-zh') {
+                definitionHTML = `<span class="chinese-definition" data-definition="${item.definition}"><span class="placeholder-text">[ 顯示中文 ]</span></span>`;
+            }
+
+            row.innerHTML = `
+                <td class="english-column">${englishHTML}</td>
+                <td class="speaker-column">
+                    <span class="speaker-icon" title="發音">🔊</span>
+                </td>
+                <td class="pos-column">${item.pos}</td>
+                <td class="definition-column">${definitionHTML}</td>
+            `;
+            
+            row.querySelector('.speaker-icon').addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                speak(item.word);
+            });
+
+            row.querySelector('.english-column').addEventListener('click', (e) => {
+                const contentSpan = e.currentTarget.querySelector('.english-content');
+                if (contentSpan && contentSpan.dataset.word) {
+                    contentSpan.textContent = contentSpan.dataset.word;
+                    contentSpan.removeAttribute('data-word');
+                }
+            });
+            
+            row.querySelector('.definition-column').addEventListener('click', (e) => {
+                const contentSpan = e.currentTarget.querySelector('.chinese-definition');
+                if (contentSpan && contentSpan.dataset.definition) {
+                    contentSpan.textContent = contentSpan.dataset.definition;
+                    contentSpan.removeAttribute('data-definition');
+                }
+            });
+
+            vocabBody.appendChild(row);
+        });
+    }
+
+    function createSessionDropdown() {
+        const totalWords = vocabularyData.length;
+        const wordsPerSession = 20; // Changed to 20
+        const numSessions = Math.ceil(totalWords / wordsPerSession);
+
+        for (let i = 0; i < numSessions; i++) {
+            const option = document.createElement('option');
+            const start = i * wordsPerSession;
+            const end = Math.min(start + wordsPerSession, totalWords);
+            option.value = `${start},${end}`;
+            option.textContent = `第 ${i + 1} 回 (單字 ${start + 1} - ${end})`;
+            sessionSelect.appendChild(option);
+        }
+    }
+
+    function loadSession() {
+        const [start, end] = sessionSelect.value.split(',').map(Number);
+        fixedSessionOrder = vocabularyData.slice(start, end);
+        currentSessionList = [...fixedSessionOrder];
+        setMode('');
+    }
+
+    function shuffleCurrentSession() {
+        currentSessionList = shuffleArray(currentSessionList);
+        renderList(currentSessionList, currentMode);
+    }
+
+    function setMode(modeClass) {
+        currentMode = modeClass; 
+        
+        allButtons.forEach(btn => btn.classList.remove('active'));
+        if (modeClass === 'test-mode-zh') {
+            document.getElementById('mode-test-zh').classList.add('active');
+        } else if (modeClass === 'test-mode-en') {
+            document.getElementById('mode-test-en').classList.add('active');
+        } else {
+            document.getElementById('mode-normal').classList.add('active');
+        }
+        
+        renderList(currentSessionList, currentMode);
+    }
+
+    // --- INITIALIZATION ---
+    // NO GLOBAL SHUFFLE. The order is now fixed as it is in the array.
+    
+    // Assign permanent IDs.
+    vocabularyData.forEach((item, index) => item.id = index + 1); 
+    
+    createSessionDropdown();
+    loadSession();
+    
+    // --- EVENT LISTENERS ---
+    sessionSelect.addEventListener('change', loadSession);
+    document.getElementById('shuffle-button').addEventListener('click', shuffleCurrentSession);
+    
+    document.getElementById('mode-normal').addEventListener('click', () => {
+        currentSessionList = [...fixedSessionOrder];
+        setMode('');
+    });
+    document.getElementById('mode-test-zh').addEventListener('click', () => setMode('test-mode-zh'));
+    document.getElementById('mode-test-en').addEventListener('click', () => setMode('test-mode-en'));
+});
+</script>
+</body>
+</html>
