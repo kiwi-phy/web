@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>視力檢查表 (滑桿校正版)</title>
+    <style>
+        :root {
+            --bg-color: #212529;      /* 更深的背景 */
+            --card-bg-color: #343a40; /* 卡片背景 */
+            --fg-color: #f8f9fa;      /* 白色 E 和主要文字 */
+            --line-color: #adb5bd;    /* 淺灰色線條與次要文字 */
+            --accent-color: #007bff;  /* 亮藍色 (滑桿) */
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--line-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+        }
+        
+        .hidden { display: none !important; }
+
+        /* --- 校正卡片 --- */
+        #calibration-card {
+            background-color: var(--card-bg-color);
+            padding: 25px 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            box-sizing: border-box;
+        }
+
+        #calibration-card h2 {
+            color: var(--fg-color);
+            font-size: 1.4em;
+            margin: 0 0 30px 0;
+            text-align: left;
+        }
+        
+        #ruler-container {
+            margin: 20px auto;
+            /* 寬度由 JS 控制 */
+            width: 200px; 
+        }
+
+        #calibration-ruler {
+            display: flex;
+            width: 100%;
+            height: 25px;
+            border: 1.5px solid var(--line-color);
+            border-right: none;
+        }
+        .ruler-segment {
+            flex: 1;
+            border-right: 1.5px solid var(--line-color);
+            box-sizing: border-box;
+        }
+        
+        #ruler-ticks {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1em;
+            padding: 8px 0;
+            position: relative;
+            left: -2px;
+        }
+        #ruler-ticks span { transform: translateX(-50%); }
+        #ruler-ticks span:first-child { transform: translateX(0); }
+        #ruler-ticks span:last-child { transform: translateX(-100%); padding-right: 2px;}
+
+        #slider-label {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        /* --- 自訂滑桿樣式 --- */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 10px 0;
+        }
+        input[type=range]:focus { outline: none; }
+        
+        /* Chrome, Safari, Opera */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #495057;
+            border-radius: 5px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            border: 3px solid var(--fg-color);
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            margin-top: -8px; /* (thumb height - track height) / 2 */
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        /* Firefox */
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #495057;
+            border-radius: 5px;
+        }
+        input[type=range]::-moz-range-thumb {
+            border: 3px solid var(--fg-color);
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+        }
+
+        #start-button {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            margin-top: 30px;
+            width: 100%;
+        }
+        
+        /* --- 測量畫面 --- */
+        #test-screen { cursor: pointer; }
+        #e-optotype {
+            position: relative;
+            transform-origin: center;
+            background-color: transparent;
+        }
+        #e-optotype::before, #e-optotype::after, .e-spine, .e-middle { background-color: var(--fg-color); }
+        #e-optotype .e-spine { position: absolute; width: 20%; height: 100%; left: 0; top: 0; }
+        #e-optotype::before { content: ''; position: absolute; width: 100%; height: 20%; top: 0; left: 0; }
+        #e-optotype::after { content: ''; position: absolute; width: 100%; height: 20%; bottom: 0; left: 0; }
+        #e-optotype .e-middle { position: absolute; width: 100%; height: 20%; top: 40%; left: 0; }
+        
+        #info-display { position: absolute; top: 20px; left: 20px; font-size: 1.2em; color: #6c757d; text-align: left;}
+        #end-screen h2 { font-size: 2em; color: var(--fg-color); }
+    </style>
+</head>
+<body>
+
+    <div id="calibration-container" class="container">
+        <div id="calibration-card">
+            <h2>2. 螢幕校正 (5 cm)</h2>
+            <div id="ruler-container">
+                <div id="calibration-ruler">
+                    <div class="ruler-segment"></div><div class="ruler-segment"></div><div class="ruler-segment"></div><div class="ruler-segment"></div><div class="ruler-segment"></div>
+                </div>
+                <div id="ruler-ticks">
+                    <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5cm</span>
+                </div>
+            </div>
+            <p id="slider-label">拖移校正尺規</p>
+            <input type="range" min="100" max="400" value="200" id="calibration-slider">
+            <button id="start-button">開始測量</button>
+        </div>
+    </div>
+
+    <div id="test-screen" class="container hidden">
+        <div id="info-display"><div id="acuity-level"></div><div id="e-count"></div></div>
+        <div id="e-optotype"><div class="e-spine"></div><div class="e-middle"></div></div>
+    </div>
+
+    <div id="end-screen" class="container hidden">
+        <h2>測量結束</h2>
+        <p>請重新整理頁面以再次測量。</p>
+    </div>
+
+    <script>
+        const calibrationContainer = document.getElementById('calibration-container');
+        const testScreen = document.getElementById('test-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startButton = document.getElementById('start-button');
+        const slider = document.getElementById('calibration-slider');
+        const rulerContainer = document.getElementById('ruler-container');
+        const eOptotype = document.getElementById('e-optotype');
+        const acuityLevelDisplay = document.getElementById('acuity-level');
+        const eCountDisplay = document.getElementById('e-count');
+
+        const acuityLevels = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2];
+        const directions = [0, 90, 180, 270];
+        const E_HEIGHT_MM_AT_1_0 = 4.365; // 在3m處, 1.0視力對應的E字高度
+
+        let testSequence = [], currentIndex = -1, pxPerMm = 0;
+
+        function updateRulerSize() {
+            rulerContainer.style.width = `${slider.value}px`;
+        }
+
+        function generateTestSequence() {
+            testSequence = [];
+            acuityLevels.forEach(acuity => {
+                for (let i = 0; i < 2; i++) {
+                    const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+                    testSequence.push({ acuity, direction: randomDirection });
+                }
+            });
+        }
+
+        function showNextE() {
+            currentIndex++;
+            if (currentIndex >= testSequence.length) {
+                testScreen.classList.add('hidden');
+                endScreen.classList.remove('hidden');
+                return;
+            }
+            const currentE = testSequence[currentIndex];
+            const eHeightMm = E_HEIGHT_MM_AT_1_0 / currentE.acuity;
+            const eHeightPx = eHeightMm * pxPerMm;
+            
+            eOptotype.style.width = `${eHeightPx}px`;
+            eOptotype.style.height = `${eHeightPx}px`;
+            eOptotype.style.transform = `rotate(${currentE.direction}deg)`;
+
+            acuityLevelDisplay.textContent = `視力: ${currentE.acuity}`;
+            eCountDisplay.textContent = `進度: ${currentIndex + 1} / ${testSequence.length}`;
+        }
+
+        function startTest() {
+            const rulerPixelWidth = rulerContainer.offsetWidth;
+            pxPerMm = rulerPixelWidth / 50; // 基於 5cm = 50mm 計算
+
+            calibrationContainer.classList.add('hidden');
+            testScreen.classList.remove('hidden');
+            
+            generateTestSequence();
+            showNextE();
+
+            testScreen.addEventListener('click', showNextE);
+        }
+
+        slider.addEventListener('input', updateRulerSize);
+        startButton.addEventListener('click', startTest);
+        
+        // Initial setup
+        updateRulerSize();
+    </script>
+</body>
+</html>
