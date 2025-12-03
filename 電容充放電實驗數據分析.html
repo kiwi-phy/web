@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電容充放電實驗數據分析</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #e9eef2;
+            --container-bg: #ffffff;
+            --header-gradient-start: #2c3e50;
+            --header-gradient-end: #34495e;
+            --accent-blue: #3498db;
+            --accent-green: #27ae60;
+            --text-main: #2c3e50;
+            --input-bg: #f9f9f9;
+            --border-radius: 12px;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 10px;
+            background-color: var(--bg-color); 
+            font-family: -apple-system, "Microsoft JhengHei", sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;    
+            justify-content: center;
+            height: 100vh; 
+            box-sizing: border-box;
+            overflow: hidden; 
+        }
+
+        /* 主應用程式容器 */
+        .app-container { 
+            width: 98%; 
+            max-width: 1200px; 
+            height: 90vh; 
+            background: var(--container-bg); 
+            border-radius: var(--border-radius); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 5px; 
+        }
+
+        /* --- Header --- */
+        header { 
+            background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end)); 
+            color: white; 
+            padding: 12px 0;
+            text-align: center; 
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* --- 內容佈局 Grid --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr; 
+            gap: 20px;
+            padding: 20px;
+            flex: 1; 
+            overflow: hidden; 
+            background-color: #fcfcfc;
+        }
+
+        /* --- 卡片通用樣式 --- */
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        /* 副標題：靠左，長底線 */
+        .card-header {
+            padding: 12px 20px 15px 20px; 
+            text-align: left; 
+            background-color: #fff;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            display: inline-block;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 藍色線條 */
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20px;      
+            right: 20px;     
+            height: 3px;
+            background-color: var(--accent-blue);
+            border-radius: 2px;
+            opacity: 0.8;
+        }
+
+        .card-body {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            flex: 1; 
+            overflow: hidden;
+        }
+
+        /* --- 左側輸入區 --- */
+        .input-section {
+            height: 100%; 
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        textarea {
+            flex: 1; 
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: Consolas, monospace;
+            font-size: 0.95rem;
+            resize: none;
+            background-color: var(--input-bg);
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            
+            text-align: left;
+            padding: 10px;
+            padding-left: 5ch; 
+            line-height: 1.5;
+        }
+        textarea:focus { outline: none; border-color: var(--accent-blue); background: #fff; }
+
+        .btn-analyze {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: 0.2s;
+        }
+        .btn-analyze:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        /* --- 右側區塊 --- */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+        }
+
+        /* --- 分析結果區 --- */
+        .results-card {
+            flex: 0 0 auto; 
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box {
+            background-color: #f8f9fa;
+            padding: 10px 5px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+        }
+
+        .stat-label { font-size: 0.85rem; color: #6c757d; margin-bottom: 5px; font-weight: 700; }
+        .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--text-main); }
+        .stat-unit { font-size: 0.8rem; font-weight: normal; color: #adb5bd; }
+        .highlight-text { color: #e67e22; }
+
+        .equation-box {
+            background-color: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            font-family: "Times New Roman", Times, serif;
+            font-size: 1.25rem;
+            color: #d35400;
+            font-weight: bold;
+        }
+
+        /* --- 圖表區 --- */
+        .chart-card {
+            flex: 1; 
+            min-height: 0; 
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #plotDiv { width: 100%; height: 100%; }
+
+        /* --- Footer --- */
+        .copyright-footer {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* --- RWD --- */
+        @media (max-width: 900px) {
+            body { height: auto; padding: 10px; overflow-y: auto; display: block; }
+            .app-container { height: auto; max-width: 100%; width: 100%; margin-bottom: 20px; }
+            .content-grid { grid-template-columns: 1fr; overflow: visible; padding: 10px; }
+            textarea { height: 250px; }
+            .chart-card { height: 400px; flex: none; }
+            .input-section { height: auto; }
+            .stats-panel { grid-template-columns: repeat(2, 1fr); }
+            .card-header { text-align: center; } 
+            .card-header::after { left: 10px; right: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            電容充放電實驗數據分析
+        </header>
+
+        <div class="content-grid">
+            
+            <!-- 左側：輸入區 -->
+            <div class="card input-section">
+                <div class="card-header">
+                    <span class="card-title">實驗數據輸入</span>
+                </div>
+                <div class="card-body">
+                    <div class="hint">請貼上 Excel 數據 (時間 t , 電壓 V)</div>
+                    <textarea id="dataInput">
+1	0.474
+2	0.904
+3	1.29
+4	1.632
+5	1.94
+6	2.224
+7	2.463
+8	2.693
+9	2.889
+10	3.084
+11	3.26
+12	3.397
+13	3.553
+14	3.661
+15	3.768
+16	3.881
+17	3.974
+18	4.062
+19	4.135
+20	4.213
+21	4.282
+22	4.34
+23	4.394
+24	4.443
+25	4.492
+26	4.526
+27	4.57
+28	4.604
+29	4.629
+30	4.658
+31	4.687
+32	4.712
+33	4.736
+34	4.756
+35	4.77
+36	4.78
+37	4.804
+38	4.819
+39	4.829
+40	4.834
+41	4.853
+42	4.863
+43	4.868
+44	4.878
+45	4.878
+46	4.892
+47	4.897
+48	4.897
+49	4.907</textarea>
+                    <button class="btn-analyze" onclick="processData()">開始分析</button>
+                </div>
+            </div>
+
+            <!-- 右側：結果與圖表 -->
+            <div class="right-column">
+                
+                <!-- 結果顯示 -->
+                <div class="card results-card">
+                    <div class="card-header">
+                        <span class="card-title">分析結果</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-panel" id="resPanel" style="opacity: 0.6;">
+                            <div class="stat-box">
+                                <div class="stat-label">實驗模式 Mode</div>
+                                <div class="stat-value highlight-text" id="resMode">--</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">時間常數 (&tau;)</div>
+                                <div class="stat-value"><span id="resTau">--</span> <span class="stat-unit">s</span></div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">最大電壓 (V<sub>max</sub>)</div>
+                                <div class="stat-value"><span id="resVmax">--</span> <span class="stat-unit">V</span></div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">擬和度 (R<sup>2</sup>)</div>
+                                <div class="stat-value" id="resR2">--</div>
+                            </div>
+                        </div>
+
+                        <div class="equation-box" id="resEquation">
+                            等待分析...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 圖表顯示 -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <span class="card-title">數據關係圖 (V-t Plot)</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <div class="chart-container">
+                            <div id="plotDiv"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="copyright-footer">
+        Kiwi Physics © 2025 Kiwi的物理教室
+    </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        processData();
+        window.addEventListener('resize', function() {
+            const plotDiv = document.getElementById('plotDiv');
+            if (plotDiv.data && plotDiv.layout) {
+                Plotly.Plots.resize(plotDiv);
+            }
+        });
+    });
+
+    function processData() {
+        const inputEl = document.getElementById('dataInput');
+        if (!inputEl) return;
+        
+        const rawText = inputEl.value;
+        const lines = rawText.trim().split('\n');
+        
+        const tData = [];
+        const vData = [];
+
+        for (let line of lines) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                const t = parseFloat(parts[0]);
+                const v = parseFloat(parts[1]);
+                if (!isNaN(t) && !isNaN(v)) {
+                    tData.push(t);
+                    vData.push(v);
+                }
+            }
+        }
+
+        if (tData.length < 3) return;
+
+        const fit = performGeneralExponentialFit(tData, vData);
+
+        // --- 修正 Vmax 的邏輯 ---
+        // 充電：V(inf) = A. 所以 Vmax = A.
+        // 放電：V(0) = A + B (最高點), V(inf) = A. 所以 Vmax = A + B.
+        const vMaxVal = fit.isCharging ? fit.A : (fit.A + fit.B);
+
+        // Update UI
+        document.getElementById('resPanel').style.opacity = '1';
+        document.getElementById('resMode').innerText = fit.isCharging ? "充電" : "放電";
+        document.getElementById('resMode').style.color = fit.isCharging ? "#27ae60" : "#e74c3c";
+        document.getElementById('resTau').innerText = fit.tau.toFixed(3);
+        document.getElementById('resVmax').innerText = vMaxVal.toFixed(3);
+        document.getElementById('resR2').innerText = fit.r2.toFixed(4);
+
+        const A_str = fit.A.toFixed(3);
+        const B_abs_str = Math.abs(fit.B).toFixed(3);
+        const tau_str = fit.tau.toFixed(3);
+        const sign = fit.B >= 0 ? "+" : "-";
+        const eqHTML = `<i>V</i>(<i>t</i>) = ${A_str} ${sign} ${B_abs_str} <i>e</i><sup> -<i>t</i> / ${tau_str}</sup>`;
+        document.getElementById('resEquation').innerHTML = eqHTML;
+
+        // Theory Curve Generation
+        const tLine = [];
+        const vLine = [];
+        
+        // 限制擬和線範圍在數據範圍內
+        const minT = Math.min(...tData);
+        const maxT = Math.max(...tData);
+        const steps = 200;
+
+        for (let i = 0; i <= steps; i++) {
+            const t = minT + (maxT - minT) * (i / steps);
+            const v = fit.A + fit.B * Math.exp(-t / fit.tau);
+            tLine.push(t);
+            vLine.push(v);
+        }
+
+        drawChart(tData, vData, tLine, vLine, fit.isCharging);
+    }
+
+    function drawChart(tData, vData, tLine, vLine, isCharging) {
+        const traceScatter = {
+            x: tData,
+            y: vData,
+            mode: 'markers',
+            name: '實驗數據',
+            marker: { color: '#34495e', symbol: 'circle-open', size: 6, line: { width: 1.5 } },
+            // 時間顯示到小數下一位 (.1f)，數據不顯示 fit 數據
+            hovertemplate: 't: %{x:.1f} s<br>V: %{y:.3f} V<extra></extra>' 
+        };
+
+        const traceLine = {
+            x: tLine,
+            y: vLine,
+            mode: 'lines',
+            name: '擬和曲線',
+            line: { color: '#e74c3c', width: 2.5 },
+            // 設定不顯示紅色曲線的 hover
+            hoverinfo: 'skip'
+        };
+
+        const legendPos = isCharging ? 
+            { x: 0.95, y: 0.05, xanchor: 'right', yanchor: 'bottom' } : 
+            { x: 0.95, y: 0.95, xanchor: 'right', yanchor: 'top' };
+
+        const layout = {
+            autosize: true,
+            margin: { t: 30, r: 25, l: 70, b: 60 },
+            font: { family: "Microsoft JhengHei, Arial", size: 12 },
+            xaxis: {
+                title: { text: '時間 t (s)', standoff: 20 },
+                showline: true, linewidth: 1, linecolor: '#ccc',
+                mirror: true, showgrid: true, gridcolor: '#f0f0f0',
+                zeroline: true, zerolinecolor: '#999', zerolinewidth: 1,
+                rangemode: 'tozero',
+                ticks: 'outside', ticklen: 5,
+                // 不設定 tickformat 以使用預設自動行為 (整數顯整數，小數顯小數)
+            },
+            yaxis: {
+                title: { text: '電壓 V (V)', standoff: 20 },
+                showline: true, linewidth: 1, linecolor: '#ccc',
+                mirror: true, showgrid: true, gridcolor: '#f0f0f0',
+                zeroline: true, zerolinecolor: '#999', zerolinewidth: 1,
+                rangemode: 'tozero',
+                ticks: 'outside', ticklen: 5,
+            },
+            legend: {
+                ...legendPos,
+                bgcolor: 'rgba(255,255,255,0.7)',
+                bordercolor: '#eee', borderwidth: 1
+            },
+            plot_bgcolor: '#fff',
+            paper_bgcolor: '#fff',
+            // 設定 hover 模式，不顯示下方的軸標籤
+            hovermode: 'closest'
+        };
+
+        const config = {
+            responsive: true,
+            displayModeBar: false
+        };
+
+        Plotly.react('plotDiv', [traceScatter, traceLine], layout, config);
+    }
+
+    // --- 分析演算法 ---
+    function performGeneralExponentialFit(tArr, vArr) {
+        let bestTau = 1.0;
+        let maxR2 = -Infinity;
+        let bestParams = { A: 0, B: 0 };
+
+        for (let logTau = -1; logTau <= 3; logTau += 0.05) {
+            const tau = Math.pow(10, logTau);
+            const res = linearRegressionForTau(tArr, vArr, tau);
+            if (res.r2 > maxR2) {
+                maxR2 = res.r2;
+                bestTau = tau;
+                bestParams = { A: res.A, B: res.B };
+            }
+        }
+
+        let currentTau = bestTau;
+        let step = currentTau * 0.1;
+        for (let i = 0; i < 20; i++) {
+            const tauPlus = currentTau + step;
+            const tauMinus = currentTau - step;
+            const r2Plus = linearRegressionForTau(tArr, vArr, tauPlus).r2;
+            const r2Minus = linearRegressionForTau(tArr, vArr, tauMinus).r2;
+            
+            if (r2Plus > maxR2) { maxR2 = r2Plus; currentTau = tauPlus; } 
+            else if (r2Minus > maxR2) { maxR2 = r2Minus; currentTau = tauMinus; } 
+            else { step *= 0.5; }
+        }
+        bestTau = currentTau;
+        const finalRes = linearRegressionForTau(tArr, vArr, bestTau);
+        bestParams = { A: finalRes.A, B: finalRes.B };
+
+        return {
+            tau: bestTau,
+            vFinal: bestParams.A, // 這是為了傳給外部計算邏輯用的參數 A
+            A: bestParams.A,
+            B: bestParams.B,
+            r2: maxR2,
+            isCharging: bestParams.B < 0
+        };
+    }
+
+    function linearRegressionForTau(tArr, vArr, tau) {
+        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        const n = tArr.length;
+        for(let i=0; i<n; i++) {
+            const x = Math.exp(-tArr[i] / tau);
+            const y = vArr[i];
+            sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
+        }
+        const denominator = (n * sumXX - sumX * sumX);
+        if (denominator === 0) return { A:0, B:0, r2: -1 };
+        const B = (n * sumXY - sumX * sumY) / denominator;
+        const A = (sumY - B * sumX) / n;
+        
+        let ssTot = 0, ssRes = 0;
+        const vMean = sumY / n;
+        for(let i=0; i<n; i++) {
+            const y = vArr[i];
+            const pred = A + B * Math.exp(-tArr[i] / tau);
+            ssTot += (y - vMean) ** 2;
+            ssRes += (y - pred) ** 2;
+        }
+        const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
+        return { A, B, r2 };
+    }
+</script>
+
+</body>
+</html>
