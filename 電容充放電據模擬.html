@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RC 電路充放電模擬</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* --- 基礎變數 --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --block-bg: #ffffff;
+            --header-bg: #2c3e50;
+            --accent-blue: #2980b9;
+            --accent-green: #27ae60;
+            --text-main: #333;
+            --border-color: #ddd;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+            --radius: 12px;
+            --serif-font: "Times New Roman", serif; 
+            --sans-font: "Microsoft JhengHei", sans-serif;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 15px;
+            background-color: var(--bg-color); 
+            font-family: var(--serif-font);
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;    
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* 字體設定：中文黑體，英文/數字 Times New Roman */
+        body, button, input, select, textarea { font-family: var(--font-stack); }
+        .section-title, .header-block, .btn-container button, label, .data-label { font-family: var(--sans-font); }
+        .math-text, .unit, .data-value, .data-unit, input { font-family: var(--serif-font) !important; }
+        i { font-family: var(--serif-font); font-style: italic; }
+
+        /* 主佈局容器 */
+        .main-wrapper { 
+            width: 100%; 
+            max-width: 1280px; 
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* --- 1. 頂部標題 --- */
+        .header-block { 
+            background-color: var(--header-bg); 
+            color: white; 
+            padding: 12px 0;
+            text-align: center; 
+            font-size: 1.8rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            flex-shrink: 0;
+        }
+
+        /* --- 2. 中間區域 --- */
+        .middle-section {
+            display: grid;
+            grid-template-columns: 320px 1fr; 
+            gap: 12px; 
+            flex-shrink: 0;
+            align-items: stretch; 
+        }
+
+        .card-block {
+            background-color: var(--block-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            padding: 12px 15px; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: var(--header-bg);
+            border-bottom: 3px solid var(--accent-blue);
+            padding-bottom: 4px;
+            margin-bottom: 8px; 
+            display: block;
+        }
+
+        /* 左側：參數設定 */
+        .control-panel { gap: 5px; }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 3px;
+            /* 修改處 1：整列往右移 */
+            padding-left: 12px;
+        }
+        
+        .input-group label {
+            width: 90px;
+            font-weight: bold;
+            color: #444;
+            font-size: 1rem;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            /* 修改處 2：調整 padding，左側增加到 10px */
+            padding: 4px 10px; 
+            border: 1px solid #ccc;
+            font-size: 1.1rem;
+            border-radius: 4px;
+        }
+
+        .unit { margin-left: 6px; color: #444; font-size: 1rem; }
+
+        .radio-group { display: flex; gap: 12px; }
+        .radio-group label {
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-container { display: flex; gap: 8px; margin-top: 8px; }
+        button {
+            flex: 1;
+            padding: 8px; 
+            cursor: pointer;
+            font-size: 1.05rem;
+            border: none;
+            color: white;
+            transition: 0.2s;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        #btnStart { background-color: var(--accent-green); }
+        #btnReset { background-color: #7f8c8d; }
+
+         /* 保留：重置按鈕深藍色 */
+        #btnReset { background-color: #154360; }
+        
+        button:hover { filter: brightness(1.1); }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* 右側：數據顯示 */
+        .data-panel { justify-content: center; }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px; 
+            height: 100%;
+        }
+
+        .data-box {
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            padding: 8px 10px; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            border-radius: 6px;
+        }
+
+        .data-label {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .data-content {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .data-value {
+            font-size: 1.7rem; 
+            font-weight: bold;
+            color: var(--header-bg);
+            font-variant-numeric: tabular-nums; 
+        }
+
+        .data-unit { font-size: 1.1rem; color: #555; }
+
+        /* --- 3. 底部區域：圖表 --- */
+        .charts-block {
+            display: flex;
+            flex-direction: column;
+            flex: 1; 
+            min-height: 0;
+            padding: 15px 30px 25px 30px; 
+        }
+
+        /* 修改處 3：底部圖表區的標題往下移 5px */
+        .charts-block .section-title {
+            margin-top: 5px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+        }
+
+        .chart-container {
+            border: 1px solid #000; 
+            border-radius: 0;
+            height: 280px; 
+            position: relative;
+            background: #fff;
+        }
+
+        /* --- RWD --- */
+        @media (max-width: 900px) {
+            .middle-section { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .chart-container { height: 300px; }
+            .charts-block { padding: 15px; } 
+        }
+
+        footer {
+            margin-top: 10px;
+            color: #888;
+            font-size: 0.9rem;
+            text-align: center;
+            padding-bottom: 10px;
+        }
+        
+        sup { vertical-align: super; font-size: smaller; }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        
+        <!-- 1. 標題 -->
+        <header class="header-block">
+            RC 電路充放電模擬
+        </header>
+
+        <!-- 2. 中間區域 -->
+        <div class="middle-section">
+            
+            <!-- 左側卡片：參數設定 -->
+            <div class="card-block control-panel">
+                <div class="section-title">實驗參數設定</div>
+                
+                <div class="input-group">
+                    <label>模式</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="mode" value="charge" checked onchange="resetSimulation()"> 充電</label>
+                        <label><input type="radio" name="mode" value="discharge" onchange="resetSimulation()"> 放電</label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>電壓 <i>V</i><sub>0</sub></label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inV0" value="6.0" step="0.1">
+                        <span class="unit">V</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>電阻 <i>R</i></label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inR" value="2000" step="100">
+                        <span class="unit">Ω</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>電容 <i>C</i></label>
+                    <div class="input-wrapper">
+                        <input type="number" id="inC" value="1000" step="100">
+                        <span class="unit">μF</span>
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button id="btnStart" onclick="toggleSimulation()">開始模擬</button>
+                    <button id="btnReset" onclick="resetSimulation()">重置</button>
+                </div>
+            </div>
+
+            <!-- 右側卡片：數據監測 -->
+            <div class="card-block data-panel">
+                <div class="section-title">即時數據監測</div>
+                <div class="data-grid">
+                    <div class="data-box">
+                        <div class="data-label">經過時間 (Time)</div>
+                        <div class="data-content">
+                            <div class="data-value" id="valT">0.00</div>
+                            <div class="data-unit">s</div>
+                        </div>
+                    </div>
+                    <div class="data-box">
+                        <div class="data-label">電容電壓 (Voltage)</div>
+                        <div class="data-content">
+                            <div class="data-value" id="valVc">0.00</div>
+                            <div class="data-unit">V</div>
+                        </div>
+                    </div>
+                    <div class="data-box">
+                        <div class="data-label">迴路電流 (Current)</div>
+                        <div class="data-content">
+                            <div class="data-value" id="valI">0.00</div>
+                            <div class="data-unit">A</div>
+                        </div>
+                    </div>
+                    <div class="data-box">
+                        <div class="data-label">儲存能量 (Energy)</div>
+                        <div class="data-content">
+                            <div class="data-value" id="valEc">0.00</div>
+                            <div class="data-unit">J</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. 底部區域：圖表 -->
+        <div class="card-block charts-block">
+            <div class="section-title">模擬關係圖</div>
+            <div class="charts-grid">
+                <div class="chart-container" id="plotVc"></div>
+                <div class="chart-container" id="plotI"></div>
+                <div class="chart-container" id="plotEc"></div>
+            </div>
+        </div>
+
+        <footer>
+            Kiwi Physics © 2025 Kiwi的物理教室
+        </footer>
+
+    </div>
+
+<script>
+    let animationId = null;
+    let isRunning = false;
+    let isFinished = false;
+    let startTime = 0;
+    let simulationTime = 0;
+    
+    let V0, R, C, tau;
+    let isCharging = true;
+    let dataTrace = { t: [], vc: [], i: [], ec: [] };
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initPlots();
+        updateDisplay(0, 0, 0, 0);
+        
+        window.addEventListener('resize', function() {
+            Plotly.Plots.resize('plotVc');
+            Plotly.Plots.resize('plotI');
+            Plotly.Plots.resize('plotEc');
+        });
+    });
+
+    function formatScientific(num, precision = 2) {
+        if (num === 0) return "0.00";
+        const absNum = Math.abs(num);
+        if (absNum >= 0.001 && absNum < 10000) {
+            return num.toFixed(precision);
+        }
+        const expStr = num.toExponential(precision); 
+        const [mantissa, exponent] = expStr.split('e');
+        const cleanExponent = exponent.replace('+', '');
+        return `${mantissa} × 10<sup>${cleanExponent}</sup>`;
+    }
+
+    function initPlots() {
+        const commonLayout = {
+            autosize: true,
+            margin: { t: 40, r: 25, l: 80, b: 50 },
+            font: { family: "Times New Roman, serif", size: 14, color: "#000" },
+            plot_bgcolor: '#fff',
+            paper_bgcolor: '#fff',
+            xaxis: { 
+                title: { text: 'Time <i>t</i> (s)', standoff: 20 },
+                showline: true, linewidth: 1, linecolor: 'black', mirror: true,
+                ticks: 'inside', tickwidth: 1, tickcolor: 'black', ticklen: 5,
+                gridcolor: '#eee', zeroline: false
+            },
+            yaxis: { 
+                title: { standoff: 15 },
+                showline: true, linewidth: 1, linecolor: 'black', mirror: true,
+                ticks: 'inside', tickwidth: 1, tickcolor: 'black', ticklen: 5,
+                gridcolor: '#eee', zeroline: false
+            }
+        };
+
+        const layoutVc = JSON.parse(JSON.stringify(commonLayout));
+        layoutVc.title = 'Voltage vs Time';
+        layoutVc.yaxis.title = 'Voltage <i>V<sub>c</sub></i> (V)';
+
+        const layoutI = JSON.parse(JSON.stringify(commonLayout));
+        layoutI.title = 'Current vs Time';
+        layoutI.yaxis.title = 'Current <i>I</i> (A)';
+
+        const layoutEc = JSON.parse(JSON.stringify(commonLayout));
+        layoutEc.title = 'Energy vs Time';
+        layoutEc.yaxis.title = 'Energy <i>E<sub>c</sub></i> (J)';
+
+        const config = { displayModeBar: false, responsive: true };
+        
+        Plotly.newPlot('plotVc', [{ x:[], y:[], mode:'lines', line:{color:'#e74c3c', width:2} }], layoutVc, config);
+        Plotly.newPlot('plotI', [{ x:[], y:[], mode:'lines', line:{color:'#2980b9', width:2} }], layoutI, config);
+        Plotly.newPlot('plotEc', [{ x:[], y:[], mode:'lines', line:{color:'#27ae60', width:2} }], layoutEc, config);
+    }
+
+    function getInputs() {
+        V0 = parseFloat(document.getElementById('inV0').value);
+        R = parseFloat(document.getElementById('inR').value);
+        C = parseFloat(document.getElementById('inC').value) * 1e-6; 
+        tau = R * C;
+        
+        const modeEls = document.getElementsByName('mode');
+        for(let el of modeEls) {
+            if(el.checked) isCharging = (el.value === 'charge');
+        }
+    }
+
+    function toggleInputs(disabled) {
+        document.querySelectorAll('input').forEach(el => el.disabled = disabled);
+        document.querySelectorAll('input[type=radio]').forEach(el => el.disabled = disabled);
+    }
+
+    function toggleSimulation() {
+        if (isFinished) return; 
+
+        if (isRunning) {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
+            const btn = document.getElementById('btnStart');
+            btn.innerText = "繼續模擬";
+            btn.style.backgroundColor = "#e67e22"; 
+        } else {
+            startSimulation();
+        }
+    }
+
+    function startSimulation() {
+        getInputs();
+        toggleInputs(true);
+        
+        const btn = document.getElementById('btnStart');
+        btn.innerText = "暫停模擬";
+        btn.style.backgroundColor = "#c0392b"; 
+
+        isRunning = true;
+
+        if (simulationTime === 0) {
+            startTime = performance.now();
+            
+            const initVc = isCharging ? 0 : V0;
+            const initI = isCharging ? (V0/R) : (V0/R); 
+            const initEc = 0.5 * C * initVc * initVc;
+
+            dataTrace = { t:[0], vc:[initVc], i:[initI], ec:[initEc] };
+            
+            const maxT = 5 * tau;
+            
+            const maxY_V = V0 * 1.1;
+            const maxY_I = (V0/R) * 1.1;
+            const maxY_E = (0.5 * C * V0 * V0) * 1.1;
+
+            Plotly.relayout('plotVc', { 'xaxis.range': [0, maxT], 'yaxis.range': [0, maxY_V] });
+            Plotly.relayout('plotI',  { 'xaxis.range': [0, maxT], 'yaxis.range': [0, maxY_I] });
+            Plotly.relayout('plotEc', { 'xaxis.range': [0, maxT], 'yaxis.range': [0, maxY_E] });
+        } else {
+            startTime = performance.now() - (simulationTime * 1000);
+        }
+
+        loop();
+    }
+
+    function loop() {
+        if (!isRunning) return;
+
+        const now = performance.now();
+        simulationTime = (now - startTime) / 1000; 
+
+        let currentVc, currentI;
+
+        if (isCharging) {
+            currentVc = V0 * (1 - Math.exp(-simulationTime / tau));
+            currentI = (V0 / R) * Math.exp(-simulationTime / tau);
+        } else {
+            currentVc = V0 * Math.exp(-simulationTime / tau);
+            currentI = (V0 / R) * Math.exp(-simulationTime / tau);
+        }
+
+        let currentEc = 0.5 * C * currentVc * currentVc;
+
+        dataTrace.t.push(simulationTime);
+        dataTrace.vc.push(currentVc);
+        dataTrace.i.push(currentI);
+        dataTrace.ec.push(currentEc);
+
+        updateDisplay(simulationTime, currentVc, currentI, currentEc);
+
+        Plotly.update('plotVc', { x: [dataTrace.t], y: [dataTrace.vc] });
+        Plotly.update('plotI',  { x: [dataTrace.t], y: [dataTrace.i] });
+        Plotly.update('plotEc', { x: [dataTrace.t], y: [dataTrace.ec] });
+
+        if (simulationTime >= 5 * tau) {
+            finishSimulation();
+            return;
+        }
+
+        animationId = requestAnimationFrame(loop);
+    }
+
+    function updateDisplay(t, v, i, e) {
+        document.getElementById('valT').innerHTML = formatScientific(t);
+        document.getElementById('valVc').innerHTML = formatScientific(v);
+        document.getElementById('valI').innerHTML = formatScientific(i);
+        document.getElementById('valEc').innerHTML = formatScientific(e);
+    }
+
+    function finishSimulation() {
+        isRunning = false;
+        isFinished = true;
+        cancelAnimationFrame(animationId);
+        
+        const btn = document.getElementById('btnStart');
+        btn.innerText = "模擬結束";
+        btn.disabled = true;
+        btn.style.backgroundColor = "#95a5a6";
+    }
+
+    function resetSimulation() {
+        isRunning = false;
+        isFinished = false;
+        cancelAnimationFrame(animationId);
+        simulationTime = 0;
+        
+        toggleInputs(false);
+        updateDisplay(0, 0, 0, 0);
+
+        const btn = document.getElementById('btnStart');
+        btn.innerText = "開始模擬";
+        btn.disabled = false;
+        btn.style.backgroundColor = "var(--accent-green)";
+
+        initPlots();
+    }
+</script>
+
+</body>
+</html>
