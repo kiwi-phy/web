@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED I-V 曲線實驗數據分析</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #e9eef2;
+            --container-bg: #ffffff;
+            --header-gradient-start: #2c3e50;
+            --header-gradient-end: #34495e;
+            --accent-blue: #3498db;
+            --accent-green: #27ae60;
+            --text-main: #2c3e50;
+            --input-bg: #f9f9f9;
+            --border-radius: 12px;
+        }
+
+        body { 
+            margin: 0; 
+            padding: 10px;
+            background-color: var(--bg-color); 
+            font-family: -apple-system, "Microsoft JhengHei", sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;    
+            justify-content: center;
+            height: 100vh; 
+            box-sizing: border-box;
+            overflow: hidden; 
+        }
+
+        /* 主應用程式容器 */
+        .app-container { 
+            width: 98%; 
+            max-width: 1200px; 
+            height: 90vh; 
+            background: var(--container-bg); 
+            border-radius: var(--border-radius); 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); 
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 5px; 
+        }
+
+        /* --- Header --- */
+        header { 
+            background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end)); 
+            color: white; 
+            padding: 12px 0;
+            text-align: center; 
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* --- 內容佈局 Grid --- */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr; 
+            gap: 20px;
+            padding: 20px;
+            flex: 1; 
+            overflow: hidden; 
+            background-color: #fcfcfc;
+        }
+
+        /* --- 卡片通用樣式 --- */
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+
+        .card-header {
+            padding: 12px 20px 15px 20px; 
+            text-align: left; 
+            background-color: #fff;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            display: inline-block;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20px;      
+            right: 20px;     
+            height: 3px;
+            background-color: var(--accent-blue);
+            border-radius: 2px;
+            opacity: 0.8;
+        }
+
+        .card-body {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            flex: 1; 
+            overflow: hidden;
+        }
+
+        /* --- 左側輸入區 --- */
+        .input-section {
+            height: 100%; 
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 8px;
+            /* 修正：取消提示文字縮排 */
+            padding-left: 0; 
+        }
+
+        textarea {
+            flex: 1; 
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: Consolas, monospace;
+            font-size: 0.95rem;
+            resize: none;
+            background-color: var(--input-bg);
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            text-align: left;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-y: scroll;
+            
+            /* 修正：數據內容保留左側 40px 空白 */
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: 40px; 
+        }
+        textarea:focus { outline: none; border-color: var(--accent-blue); background: #fff; }
+
+        .btn-analyze {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: 0.2s;
+        }
+        .btn-analyze:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        /* --- 右側區塊 --- */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 100%;
+        }
+
+        /* --- 分析結果區 --- */
+        .results-card {
+            flex: 0 0 auto; 
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box {
+            background-color: #f8f9fa;
+            padding: 10px 5px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            
+            /* Flexbox 垂直置中 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80px; 
+        }
+
+        .stat-label { font-size: 0.85rem; color: #6c757d; margin-bottom: 5px; font-weight: 700; }
+        .stat-value { font-size: 1.25rem; font-weight: 800; color: var(--text-main); }
+        .stat-unit { font-size: 0.8rem; font-weight: normal; color: #adb5bd; }
+        .highlight-text { color: #e67e22; }
+
+        .equation-box {
+            background-color: #fffbe6;
+            border: 1px solid #ffe58f;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            font-family: "Times New Roman", Times, serif;
+            font-size: 1.25rem;
+            color: #d35400;
+            font-weight: bold;
+        }
+
+        /* --- 圖表區 --- */
+        .chart-card {
+            flex: 1; 
+            min-height: 0; 
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #plotDiv { width: 100%; height: 100%; }
+
+        /* --- Footer --- */
+        .copyright-footer {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* --- RWD --- */
+        @media (max-width: 900px) {
+            body { height: auto; padding: 10px; overflow-y: auto; display: block; }
+            .app-container { height: auto; max-width: 100%; width: 100%; margin-bottom: 20px; }
+            .content-grid { grid-template-columns: 1fr; overflow: visible; padding: 10px; }
+            textarea { height: 250px; }
+            .chart-card { height: 400px; flex: none; }
+            .input-section { height: auto; }
+            .stats-panel { grid-template-columns: repeat(2, 1fr); }
+            .card-header { text-align: center; } 
+            .card-header::after { left: 10px; right: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            LED I-V 曲線實驗數據分析
+        </header>
+
+        <div class="content-grid">
+            
+            <!-- 左側：輸入區 -->
+            <div class="card input-section">
+                <div class="card-header">
+                    <span class="card-title">實驗數據輸入</span>
+                </div>
+                <div class="card-body">
+                    <div class="hint">請貼上 Excel 數據 (電壓 V , 電流 mA)</div>
+                    <textarea id="dataInput" placeholder="例如：&#10;0       0&#10;1.5     0&#10;1.8     1.6&#10;2.0     13.5">
+0	0
+0.8016	0
+1.5005	0
+1.7204	0.1111
+1.7693	0.3332
+1.8035	0.6887
+1.8524	1.644
+1.8768	2.5327
+1.8866	2.9992
+1.9648	8.1978
+1.9795	9.4864
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075</textarea>
+
+                    <button class="btn-analyze" onclick="processData()">開始分析</button>
+                </div>
+            </div>
+
+            <!-- 右側：結果與圖表 -->
+            <div class="right-column">
+                
+                <!-- 結果顯示 -->
+                <div class="card results-card">
+                    <div class="card-header">
+                        <span class="card-title">分析結果</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-panel" id="resPanel" style="opacity: 0.6;">
+                            <!-- 顏色放第一欄 -->
+                            <div class="stat-box">
+                                <div class="stat-label">預測顏色 Color</div>
+                                <div class="stat-value highlight-text" id="resColor">--</div>
+                                <div class="stat-unit" id="resColorBand" style="display:none;"></div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">導通電壓 V<sub>on</sub></div>
+                                <div class="stat-value" id="resVon">--</div>
+                                <div class="stat-unit">(@ 1mA)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">工作電壓 V<sub>op</sub></div>
+                                <div class="stat-value" id="resVop">--</div>
+                                <div class="stat-unit">(@ 20mA)</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-label">擬和度 (R<sup>2</sup>)</div>
+                                <div class="stat-value" id="resR2">--</div>
+                            </div>
+                        </div>
+
+                        <div class="equation-box" id="resEquation">
+                            等待分析...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 圖表顯示 -->
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <span class="card-title">I-V 特性曲線圖</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <div class="chart-container">
+                            <div id="plotDiv"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="copyright-footer">
+        Kiwi Physics © 2025 Kiwi的物理教室
+    </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        processData(); // 預設執行
+        window.addEventListener('resize', function() {
+            const plotDiv = document.getElementById('plotDiv');
+            if (plotDiv.data && plotDiv.layout) {
+                Plotly.Plots.resize(plotDiv);
+            }
+        });
+    });
+
+    function processData() {
+        const inputEl = document.getElementById('dataInput');
+        const rawText = inputEl.value;
+        const lines = rawText.trim().split('\n');
+        
+        let dataPoints = [];
+        
+        // 解析數據
+        for (let line of lines) {
+            const parts = line.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                const v = parseFloat(parts[0]);
+                const i = parseFloat(parts[1]);
+                if (!isNaN(v) && !isNaN(i)) {
+                    dataPoints.push({ v: v, i: i });
+                }
+            }
+        }
+
+        dataPoints.sort((a, b) => a.v - b.v);
+        
+        if (dataPoints.length < 3) return;
+
+        const plotV = dataPoints.map(p => p.v);
+        const plotI = dataPoints.map(p => p.i);
+
+        // --- 核心分析邏輯 ---
+        const maxCurrent = Math.max(...plotI);
+        let fitData = dataPoints.filter(p => p.i > 0.05); // 初步過濾低電流
+        
+        // 檢查飽和
+        let cleanData = [];
+        for (let k = 0; k < fitData.length; k++) {
+            cleanData.push(fitData[k]);
+            if (k < fitData.length - 1) {
+                if (fitData[k].i > maxCurrent * 0.8 && fitData[k+1].i <= fitData[k].i * 1.01) {
+                    break;
+                }
+            }
+        }
+
+        // 回歸分析
+        const regression = performExponentialRegression(cleanData);
+        const A = regression.A;
+        const B = regression.B;
+        
+        // 計算參數
+        const vOn = (Math.log(1) - Math.log(A)) / B; // @1mA
+        const vF20 = (Math.log(20) - Math.log(A)) / B; // @20mA
+        
+        let colorPred = "未知";
+        let colorStyle = "#333";
+
+        // 判定邏輯修正：確保紅光範圍符合 1.9V 需求
+        if (vF20 < 1.5) { colorPred = "紅外線 (IR)"; colorStyle = "#888"; }
+        else if (vF20 < 2.05) { colorPred = "紅色 "; colorStyle = "#e74c3c";}
+        else if (vF20 < 2.45) { colorPred = "黃/橘/綠"; colorStyle = "#f39c12"; }
+        else if (vF20 < 3.5) { colorPred = "藍/白/翠綠"; colorStyle = "#3498db"; }
+        else { colorPred = "紫外線 (UV)"; colorStyle = "#9b59b6"; }
+
+        // --- 更新 UI ---
+        document.getElementById('resPanel').style.opacity = '1';
+        
+        // 顏色
+        const colorEl = document.getElementById('resColor');
+        colorEl.innerText = colorPred;
+        colorEl.style.color = colorStyle;
+        
+        // Von
+        document.getElementById('resVon').innerText = vOn.toFixed(2);
+        
+        // Vop
+        document.getElementById('resVop').innerText = vF20.toFixed(2);
+
+        // R2
+        document.getElementById('resR2').innerText = regression.r2.toFixed(4);
+
+        // 方程式
+        const aSci = A.toExponential(2); 
+        const [aBase, aExp] = aSci.split('e');
+        const B_fix = B.toFixed(1);
+        document.getElementById('resEquation').innerHTML = 
+            `<i>I</i> = ${aBase} &times; 10<sup>${parseInt(aExp)}</sup> &times; <i>e</i><sup> ${B_fix} <i>V</i></sup> <span style="font-size:1.4rem; vertical-align:middle;">(mA)</span>`;
+
+        // --- 擬和曲線數據 ---
+        const fitCurveV = [];
+        const fitCurveI = [];
+        const startV = 0; 
+        const endV = Math.max(...plotV) * 1.05; 
+        const steps = 150;
+        
+        for(let i=0; i<=steps; i++) {
+            const v = startV + (endV - startV) * (i/steps);
+            const current = A * Math.exp(B * v);
+            if(current < maxCurrent * 1.3) {
+                fitCurveV.push(v);
+                fitCurveI.push(current);
+            }
+        }
+
+        drawChart(plotV, plotI, fitCurveV, fitCurveI, colorStyle);
+    }
+
+    function performExponentialRegression(data) {
+        let n = 0, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        for (let p of data) {
+            if (p.i <= 0) continue; 
+            const x = p.v;
+            const y = Math.log(p.i);
+            sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
+            n++;
+        }
+        if (n < 2) return { A:0, B:0, r2:0 };
+        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+        const A = Math.exp(intercept);
+        const B = slope;
+        let ssTot = 0, ssRes = 0;
+        const yMean = sumY / n;
+        for (let p of data) {
+            const yReal = Math.log(p.i);
+            const yPred = intercept + slope * p.v;
+            ssTot += (yReal - yMean) ** 2;
+            ssRes += (yReal - yPred) ** 2;
+        }
+        const r2 = 1 - (ssRes / ssTot);
+        return { A, B, r2 };
+    }
+
+    function drawChart(rawV, rawI, fitV, fitI, colorHex) {
+        const traceScatter = {
+            x: rawV,
+            y: rawI,
+            mode: 'markers',
+            name: '實驗數據',
+            marker: { color: '#34495e', symbol: 'circle-open', size: 8, line: { width: 2 } },
+            hovertemplate: 'V: %{x:.3f} V<br>I: %{y:.3f} mA<extra></extra>' 
+        };
+
+        const traceLine = {
+            x: fitV,
+            y: fitI,
+            mode: 'lines',
+            name: '擬和曲線',
+            line: { color: colorHex, width: 3 },
+            hoverinfo: 'skip'
+        };
+
+        const maxX = Math.max(...fitV, ...rawV) * 1.05;
+        const maxY = Math.max(...fitI, ...rawI) * 1.05;
+        const timesFont = "font-family: 'Times New Roman', serif";
+
+        const layout = {
+            autosize: true,
+            margin: { t: 30, r: 25, l: 80, b: 60 },
+            font: { family: "Microsoft JhengHei, Arial", size: 12 },
+            xaxis: {
+                title: { 
+                    text: `電壓 <span style="${timesFont}"><i>V</i> (V)</span>`, 
+                    standoff: 20 
+                },
+                showline: true, linewidth: 1, linecolor: '#ccc',
+                mirror: true, showgrid: true, gridcolor: '#f0f0f0',
+                zeroline: true, zerolinecolor: '#999',
+                ticks: 'outside',
+                rangemode: 'tozero',
+                range: [0, maxX],
+                // 修正：強制顯示小數點 (1.0, 1.5)，滿足 "1要寫1.0"
+                tickformat: '.1f',
+                dtick: 0.2, // 每 0.2 一個刻度 (如 0, 0.2, ... 1.0, 1.2)
+            },
+            yaxis: {
+                title: { 
+                    text: `電流 <span style="${timesFont}"><i>I</i> (mA)</span>`, 
+                    standoff: 18 
+                },
+                showline: true, linewidth: 1, linecolor: '#ccc',
+                mirror: true, showgrid: true, gridcolor: '#f0f0f0',
+                zeroline: true, zerolinecolor: '#999',
+                ticks: 'outside',
+                rangemode: 'tozero',
+                range: [0, maxY],
+                // 電流不強制小數點 (自動)，保持整數如 5, 10
+            },
+            legend: {
+                x: 0.05, y: 0.95,
+                bgcolor: 'rgba(255,255,255,0.8)',
+                bordercolor: '#eee', borderwidth: 1
+            },
+            plot_bgcolor: '#fff',
+            paper_bgcolor: '#fff',
+            hovermode: 'closest'
+        };
+
+        const config = {
+            responsive: true,
+            displayModeBar: false
+        };
+
+        Plotly.react('plotDiv', [traceScatter, traceLine], layout, config);
+    }
+</script>
+
+</body>
+</html>
