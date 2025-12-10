@@ -4,14 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>學測倒數日曆</title>
+    <!-- 引入 Font Awesome 圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入 Noto Sans TC 字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-color: #f6f8fb;
-            --card-bg: #ffffff;
-            --primary-color: #5d7599; /* 溫和的灰藍色，沈穩 */
-            --accent-color: #e67e22;  /* 活力橘，用於倒數 */
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --primary-color: #5d7599; 
+            --accent-color: #e67e22; 
             --text-main: #2c3e50;
             --text-sub: #7f8c8d;
+            --shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
         }
 
         * {
@@ -21,125 +27,248 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #e0eaec 0%, #cbdadb 100%);
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg-gradient);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 背景漂浮裝飾 */
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(50px);
+            z-index: -1;
+            opacity: 0.6;
+            animation: float 10s infinite ease-in-out;
+        }
+        .shape-1 {
+            top: -10%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: #a8edea;
+            animation-delay: 0s;
+        }
+        .shape-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 350px;
+            height: 350px;
+            background: #fed6e3;
+            animation-delay: 2s;
+        }
+        .shape-3 {
+            top: 20%;
+            right: 10%;
+            width: 150px;
+            height: 150px;
+            background: #e2d1c3;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
         }
 
         .container {
             background-color: var(--card-bg);
+            backdrop-filter: blur(10px); /* 磨砂玻璃效果 */
+            -webkit-backdrop-filter: blur(10px);
             width: 100%;
-            max-width: 380px; /* 手機最佳寬度 */
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 30px 24px;
+            max-width: 400px;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            padding: 40px 30px;
             text-align: center;
             position: relative;
-            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: transform 0.3s ease;
         }
 
-        /* 頂部日期 */
-        .header-date {
-            font-size: 1.1rem;
-            color: var(--text-sub);
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 頂部日期標籤 */
+        .date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(93, 117, 153, 0.1);
+            padding: 8px 16px;
+            border-radius: 50px;
+            color: var(--primary-color);
             font-weight: 500;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
         }
 
         /* 倒數區塊 */
         .countdown-section {
-            margin: 20px 0;
+            margin: 20px 0 35px 0;
+            position: relative;
         }
 
-        .countdown-label {
-            font-size: 1rem;
-            color: var(--primary-color);
-            margin-bottom: 5px;
+        .countdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            color: var(--text-sub);
+            margin-bottom: 10px;
+        }
+
+        .countdown-display {
+            position: relative;
+            display: inline-block;
         }
 
         .countdown-number {
-            font-size: 4.5rem;
-            font-weight: 800;
+            font-size: 5.5rem;
+            font-weight: 900;
             color: var(--accent-color);
             line-height: 1;
+            text-shadow: 2px 2px 0px rgba(230, 126, 34, 0.1);
             font-variant-numeric: tabular-nums;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
 
         .countdown-unit {
-            font-size: 1rem;
+            font-size: 1.2rem;
             color: var(--text-sub);
-            margin-left: 5px;
+            font-weight: 500;
+            position: absolute;
+            bottom: 12px;
+            right: -25px;
         }
 
         /* 金句區塊 */
         .quote-card {
-            background-color: #f8f9fa;
-            border-left: 5px solid var(--primary-color);
-            padding: 20px;
-            margin-top: 30px;
-            border-radius: 8px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-top: 10px;
             text-align: left;
+            border-left: 6px solid var(--primary-color);
+        }
+
+        .quote-icon {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 5px rgba(93, 117, 153, 0.4);
         }
 
         .quote-text {
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             color: var(--text-main);
-            line-height: 1.6;
-            font-weight: 600;
+            line-height: 1.7;
+            font-weight: 500;
+            margin-top: 5px;
         }
 
         .footer {
-            margin-top: 30px;
+            margin-top: 35px;
             font-size: 0.85rem;
             color: #bdc3c7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .footer i {
+            color: #e74c3c;
+            animation: heartbeat 1.5s infinite;
         }
 
-        /* 裝飾性元素 */
-        .decoration {
-            position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 100px;
-            height: 100px;
-            background: rgba(93, 117, 153, 0.1);
-            border-radius: 50%;
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
         }
 
-        /* 針對考試當天的特殊樣式 */
+        /* 考試模式 */
         .exam-mode .countdown-number {
             color: #e74c3c;
-            font-size: 3rem;
+            font-size: 3.5rem;
+            text-shadow: none;
         }
+        
+        /* Loading 狀態優化 */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
     </style>
 </head>
 <body>
 
-    <div class="container" id="mainCard">
-        <div class="decoration"></div>
-        
-        <div class="header-date" id="currentDate">Loading...</div>
+    <!-- 背景漂浮元素 -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
 
+    <div class="container fade-in" id="mainCard">
+        
+        <!-- 日期 -->
+        <div class="date-badge">
+            <i class="far fa-calendar-alt"></i>
+            <span id="currentDate">Loading...</span>
+        </div>
+
+        <!-- 倒數主體 -->
         <div class="countdown-section" id="countdownSection">
-            <div class="countdown-label">距離 2026 學測還有</div>
-            <div id="countdownDisplay">
+            <div class="countdown-header">
+                <i class="fas fa-hourglass-half"></i>
+                <span>距離 2026 學測還有</span>
+            </div>
+            <div class="countdown-display" id="countdownDisplay">
                 <span class="countdown-number" id="daysLeft">-</span>
                 <span class="countdown-unit">天</span>
             </div>
         </div>
 
+        <!-- 金句卡片 -->
         <div class="quote-card">
+            <div class="quote-icon"><i class="fas fa-quote-left"></i></div>
             <div class="quote-text" id="dailyQuote">
-                載入今日祝福中...
+                <i class="fas fa-spinner fa-spin" style="color:#bdc3c7"></i> 載入今日祝福...
             </div>
         </div>
 
         <div class="footer">
-            Kiwi為大家加油！
+            <span>Kiwi 為大家加油</span>
+            <i class="fas fa-heart"></i>
         </div>
     </div>
 
@@ -147,7 +276,7 @@
         // 設定學測日期 (2026年1月17日)
         const examDate = new Date('2026-01-17T00:00:00');
 
-        // 資料庫：日期對應的金句 (格式：MM-DD)
+        // 資料庫：日期對應的金句 (維持原資料)
         const quotesData = {
             "12-10": "你比你想像的更堅韌，眼前的困難不是為了打倒你，而是為了鍛鍊你的肌肉。",
             "12-11": "不要因為走得慢就感到焦慮，只要方向正確，每一步都算數。",
@@ -206,25 +335,26 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
             const daysLeftEl = document.getElementById('daysLeft');
-            const countdownLabel = document.querySelector('.countdown-label');
-            const countdownSection = document.getElementById('countdownSection');
+            const countdownHeader = document.querySelector('.countdown-header span');
             const mainCard = document.getElementById('mainCard');
+            const unitEl = document.querySelector('.countdown-unit');
 
             if (diffDays > 0) {
                 daysLeftEl.textContent = diffDays;
             } else if (diffDays === 0) {
                 daysLeftEl.textContent = "Today";
-                countdownLabel.textContent = "就是今天";
-                document.querySelector('.countdown-unit').style.display = 'none';
+                daysLeftEl.style.fontSize = "4rem";
+                countdownHeader.textContent = "就是今天！加油！";
+                unitEl.style.display = 'none';
                 mainCard.classList.add('exam-mode');
             } else {
                 daysLeftEl.textContent = "End";
-                countdownLabel.textContent = "考試結束";
-                document.querySelector('.countdown-unit').style.display = 'none';
+                daysLeftEl.style.fontSize = "4rem";
+                countdownHeader.textContent = "考試結束";
+                unitEl.style.display = 'none';
             }
 
             // 3. 取得當日金句
-            // 格式化日期為 MM-DD
             const month = (now.getMonth() + 1).toString().padStart(2, '0');
             const day = now.getDate().toString().padStart(2, '0');
             const dateKey = `${month}-${day}`;
@@ -233,9 +363,9 @@
             document.getElementById('dailyQuote').textContent = quote;
         }
 
-        // 初始化並每天檢查更新
+        // 初始化
         updateContent();
-        setInterval(updateContent, 60000); // 每分鐘檢查一次日期變更
+        setInterval(updateContent, 60000); 
     </script>
 </body>
 </html>
