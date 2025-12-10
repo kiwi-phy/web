@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學測倒數日曆</title>
+    <style>
+        :root {
+            --bg-color: #f6f8fb;
+            --card-bg: #ffffff;
+            --primary-color: #5d7599; /* 溫和的灰藍色，沈穩 */
+            --accent-color: #e67e22;  /* 活力橘，用於倒數 */
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #e0eaec 0%, #cbdadb 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 380px; /* 手機最佳寬度 */
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 頂部日期 */
+        .header-date {
+            font-size: 1.1rem;
+            color: var(--text-sub);
+            font-weight: 500;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        /* 倒數區塊 */
+        .countdown-section {
+            margin: 20px 0;
+        }
+
+        .countdown-label {
+            font-size: 1rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .countdown-number {
+            font-size: 4.5rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .countdown-unit {
+            font-size: 1rem;
+            color: var(--text-sub);
+            margin-left: 5px;
+        }
+
+        /* 金句區塊 */
+        .quote-card {
+            background-color: #f8f9fa;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .quote-text {
+            font-size: 1.15rem;
+            color: var(--text-main);
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: #bdc3c7;
+        }
+
+        /* 裝飾性元素 */
+        .decoration {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 100px;
+            height: 100px;
+            background: rgba(93, 117, 153, 0.1);
+            border-radius: 50%;
+        }
+
+        /* 針對考試當天的特殊樣式 */
+        .exam-mode .countdown-number {
+            color: #e74c3c;
+            font-size: 3rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainCard">
+        <div class="decoration"></div>
+        
+        <div class="header-date" id="currentDate">Loading...</div>
+
+        <div class="countdown-section" id="countdownSection">
+            <div class="countdown-label">距離 2026 學測還有</div>
+            <div id="countdownDisplay">
+                <span class="countdown-number" id="daysLeft">-</span>
+                <span class="countdown-unit">天</span>
+            </div>
+        </div>
+
+        <div class="quote-card">
+            <div class="quote-text" id="dailyQuote">
+                載入今日祝福中...
+            </div>
+        </div>
+
+        <div class="footer">
+            Kiwi為大家加油！
+        </div>
+    </div>
+
+    <script>
+        // 設定學測日期 (2026年1月17日)
+        const examDate = new Date('2026-01-17T00:00:00');
+
+        // 資料庫：日期對應的金句 (格式：MM-DD)
+        const quotesData = {
+            "12-10": "你比你想像的更堅韌，眼前的困難不是為了打倒你，而是為了鍛鍊你的肌肉。",
+            "12-11": "不要因為走得慢就感到焦慮，只要方向正確，每一步都算數。",
+            "12-12": "真正的力量，往往是在安靜與沉穩中產生的。心靜，世界就清楚了。",
+            "12-13": "你的價值不取決於一張考卷上的數字，而在於你面對挑戰時的態度。",
+            "12-14": "休息不是偷懶，是為了走更長遠的路。今天給自己一點喘息的空間。",
+            "12-15": "種子埋在土裡時是一片黑暗，但那正是發芽前的必要過程。",
+            "12-16": "不要擔憂明天的難題，今天的專注，就是對未來最好的準備。",
+            "12-17": "信心不是看見了才相信，而是相信了就能看見。",
+            "12-18": "每個人的花期不同，不必焦慮別人的進度，專注灌溉自己的花園。",
+            "12-19": "如果你覺得累，學會休息，而不是放棄。",
+            "12-20": "把大目標拆解成小步調，每完成一小步，都是一次勝利。",
+            "12-21": "在平靜安穩中，你會重新得力。",
+            "12-22": "你的努力就像存錢，每一分付出都在累積未來的財富。",
+            "12-23": "不要輕看自己年輕，你的潛力遠超過你的想像。",
+            "12-24": "平安夜，願你心中也有那份出人意外的平安，保守你的心懷意念。",
+            "12-25": "最好的禮物，就是一個堅持不懈的自己。聖誕快樂！",
+            "12-26": "風箏因為逆風而飛得更高，挑戰是為了讓你飛翔。",
+            "12-27": "快要期末考了，記得調整呼吸，按部就班就好。",
+            "12-28": "不要怕慢，只怕站。持續前進，終點就在前方。",
+            "12-29": "今天的努力，是為了讓明天的自己說聲謝謝。",
+            "12-30": "把期末考當作是學測前的「暖身賽」，練習在壓力下保持冷靜。",
+            "12-31": "2025的最後一天，感謝那個依然堅持坐在書桌前的自己。善始善終，你做得很好。",
+            "01-01": "新的一年，新的開始。過去的失誤都已翻篇，前面是全新的機會。",
+            "01-02": "心裡若充滿盼望，眼前就不會有絕路。",
+            "01-03": "當你讀不懂時，對自己多一點包容與耐心，愛是恆久忍耐。",
+            "01-04": "不要看環境的風浪有多大，要看你心中的錨定得有多深。",
+            "01-05": "恐懼會說「萬一失敗怎麼辦」，勇氣會說「如果不試，怎知能飛多高」。",
+            "01-06": "感謝身邊一起奮鬥的同學，鐵磨鐵，磨出刃來。",
+            "01-07": "專注當下，因為過去已過，未來還沒來，你能掌握的只有現在。",
+            "01-08": "身體健康也是實力的一部份，多喝水，照顧好這座奮鬥的殿堂。",
+            "01-09": "不要讓焦慮偷走今天的快樂與專注。",
+            "01-10": "每一道錯題，都是為了幫你把漏洞補起來的禮物。",
+            "01-11": "從今天起，把生理時鐘調成「學測模式」。早睡早起是對大腦最溫柔的對待。",
+            "01-12": "若是心裡慌張，試著深呼吸。你依然擁有平靜的能力。",
+            "01-13": "檢查你的裝備：身分證、文具、手錶。萬事俱備，心就安了一半。",
+            "01-14": "多吃原型食物，少吃生冷油膩。保護好你的腸胃。",
+            "01-15": "不要只想著「補救」，要「穩固」你已經會的。相信你已經擁有的。",
+            "01-16": "走進考場時，練習在心裡說：『這是我發光、發熱的舞台。』",
+            "01-17": "帶著祝福上場！不求超常發揮，但求正常表現。你的努力不會背叛你。",
+            "01-18": "忘記背後，努力面前。專注在當下的這一科，就是勝利。",
+            "01-19": "最後一哩路，堅持到底。這是一場美好的仗，我們為你驕傲！"
+        };
+
+        const defaultQuote = "願平安與智慧充滿你的心。";
+
+        function updateContent() {
+            const now = new Date();
+            
+            // 1. 更新日期顯示
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('zh-TW', dateOptions);
+
+            // 2. 計算倒數天數
+            const diffTime = examDate - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const daysLeftEl = document.getElementById('daysLeft');
+            const countdownLabel = document.querySelector('.countdown-label');
+            const countdownSection = document.getElementById('countdownSection');
+            const mainCard = document.getElementById('mainCard');
+
+            if (diffDays > 0) {
+                daysLeftEl.textContent = diffDays;
+            } else if (diffDays === 0) {
+                daysLeftEl.textContent = "Today";
+                countdownLabel.textContent = "就是今天";
+                document.querySelector('.countdown-unit').style.display = 'none';
+                mainCard.classList.add('exam-mode');
+            } else {
+                daysLeftEl.textContent = "End";
+                countdownLabel.textContent = "考試結束";
+                document.querySelector('.countdown-unit').style.display = 'none';
+            }
+
+            // 3. 取得當日金句
+            // 格式化日期為 MM-DD
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const dateKey = `${month}-${day}`;
+
+            const quote = quotesData[dateKey] || defaultQuote;
+            document.getElementById('dailyQuote').textContent = quote;
+        }
+
+        // 初始化並每天檢查更新
+        updateContent();
+        setInterval(updateContent, 60000); // 每分鐘檢查一次日期變更
+    </script>
+</body>
+</html>
