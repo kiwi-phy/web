@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>電容充放電實驗數據分析 (支援 Arduino)</title>
+    <title>LED I-V 曲線實驗數據分析 (支援 Arduino)</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
@@ -81,7 +81,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.03);
         }
 
-        /* 副標題：靠左，長底線 */
         .card-header {
             padding: 12px 20px 15px 20px; 
             text-align: left; 
@@ -99,7 +98,6 @@
             z-index: 1;
         }
 
-        /* 藍色線條 */
         .card-header::after {
             content: '';
             position: absolute;
@@ -129,6 +127,7 @@
             font-size: 0.85rem;
             color: #888;
             margin-bottom: 8px;
+            padding-left: 0; 
         }
 
         textarea {
@@ -142,11 +141,13 @@
             background-color: var(--input-bg);
             margin-bottom: 12px;
             box-sizing: border-box;
-            
             text-align: left;
-            padding: 10px;
-            padding-left: 5ch; 
             line-height: 1.5;
+            white-space: pre;
+            overflow-y: scroll;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: 40px; 
         }
         textarea:focus { outline: none; border-color: var(--accent-blue); background: #fff; }
 
@@ -191,10 +192,15 @@
             border-radius: 6px;
             text-align: center;
             border: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80px; 
         }
 
         .stat-label { font-size: 0.85rem; color: #6c757d; margin-bottom: 5px; font-weight: 700; }
-        .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--text-main); }
+        .stat-value { font-size: 1.25rem; font-weight: 800; color: var(--text-main); }
         .stat-unit { font-size: 0.8rem; font-weight: normal; color: #adb5bd; }
         .highlight-text { color: #e67e22; }
 
@@ -254,7 +260,7 @@
 
     <div class="app-container">
         <header>
-            電容充放電實驗數據分析
+            LED I-V 曲線實驗數據分析
         </header>
 
         <div class="content-grid">
@@ -266,56 +272,26 @@
                 </div>
                 <div class="card-body">
                     <div class="hint">支援 Excel (Tab) 或 Arduino (逗號) 格式</div>
-                    <textarea id="dataInput" placeholder="支援格式範例：&#10;&#10;Excel 格式 (Tab分隔):&#10;1     0.474&#10;2     0.904&#10;&#10;Arduino 格式 (逗號分隔):&#10;1, 0.474&#10;2, 0.904">
-1, 0.474
-2, 0.904
-3, 1.29
-4	1.632
-5	1.94
-6	2.224
-7	2.463
-8	2.693
-9	2.889
-10	3.084
-11	3.26
-12	3.397
-13	3.553
-14	3.661
-15	3.768
-16	3.881
-17	3.974
-18	4.062
-19	4.135
-20	4.213
-21	4.282
-22	4.34
-23	4.394
-24	4.443
-25	4.492
-26	4.526
-27	4.57
-28	4.604
-29	4.629
-30	4.658
-31	4.687
-32	4.712
-33	4.736
-34	4.756
-35	4.77
-36	4.78
-37	4.804
-38	4.819
-39	4.829
-40	4.834
-41	4.853
-42	4.863
-43	4.868
-44	4.878
-45	4.878
-46	4.892
-47	4.897
-48	4.897
-49	4.907</textarea>
+                    <!-- 修改 Placeholder 讓使用者知道支援逗號 -->
+                    <textarea id="dataInput" placeholder="支援格式範例：&#10;&#10;Excel 格式 (Tab分隔):&#10;1.5     0&#10;1.8     1.6&#10;&#10;Arduino 格式 (逗號分隔):&#10;1.85, 2.33&#10;1.90, 5.12">
+0	0
+0.8016	0
+1.5005	0
+1.7204, 0.1111
+1.7693, 0.3332
+1.8035, 0.6887
+1.8524	1.644
+1.8768	2.5327
+1.8866	2.9992
+1.9648	8.1978
+1.9795	9.4864
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075
+2.0186	13.5075</textarea>
+
                     <button class="btn-analyze" onclick="processData()">開始分析</button>
                 </div>
             </div>
@@ -330,17 +306,21 @@
                     </div>
                     <div class="card-body">
                         <div class="stats-panel" id="resPanel" style="opacity: 0.6;">
+                            <!-- 顏色放第一欄 -->
                             <div class="stat-box">
-                                <div class="stat-label">實驗模式 Mode</div>
-                                <div class="stat-value highlight-text" id="resMode">--</div>
+                                <div class="stat-label">預測顏色 Color</div>
+                                <div class="stat-value highlight-text" id="resColor">--</div>
+                                <div class="stat-unit" id="resColorBand" style="display:none;"></div>
                             </div>
                             <div class="stat-box">
-                                <div class="stat-label">時間常數 (&tau;)</div>
-                                <div class="stat-value"><span id="resTau">--</span> <span class="stat-unit">s</span></div>
+                                <div class="stat-label">導通電壓 V<sub>on</sub></div>
+                                <div class="stat-value" id="resVon">--</div>
+                                <div class="stat-unit">(@ 1mA)</div>
                             </div>
                             <div class="stat-box">
-                                <div class="stat-label">最大電壓 (V<sub>max</sub>)</div>
-                                <div class="stat-value"><span id="resVmax">--</span> <span class="stat-unit">V</span></div>
+                                <div class="stat-label">工作電壓 V<sub>op</sub></div>
+                                <div class="stat-value" id="resVop">--</div>
+                                <div class="stat-unit">(@ 20mA)</div>
                             </div>
                             <div class="stat-box">
                                 <div class="stat-label">擬和度 (R<sup>2</sup>)</div>
@@ -357,7 +337,7 @@
                 <!-- 圖表顯示 -->
                 <div class="card chart-card">
                     <div class="card-header">
-                        <span class="card-title">數據關係圖 (V-t Plot)</span>
+                        <span class="card-title">I-V 特性曲線圖</span>
                     </div>
                     <div class="card-body" style="padding: 0;">
                         <div class="chart-container">
@@ -376,7 +356,7 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        processData();
+        processData(); // 預設執行
         window.addEventListener('resize', function() {
             const plotDiv = document.getElementById('plotDiv');
             if (plotDiv.data && plotDiv.layout) {
@@ -387,124 +367,196 @@
 
     function processData() {
         const inputEl = document.getElementById('dataInput');
-        if (!inputEl) return;
-        
         const rawText = inputEl.value;
         const lines = rawText.trim().split('\n');
         
-        const tData = [];
-        const vData = [];
-
+        let dataPoints = [];
+        
+        // 解析數據
         for (let line of lines) {
-            // [修改重點]：改為 /[,\s]+/ 以同時支援逗號與空白/Tab
+            // [修改重點]：正則表達式改為 /[,\s]+/ 
+            // 意思是：只要遇到「逗號」或「空白(包含Tab)」，都視為分隔點
             const parts = line.trim().split(/[,\s]+/);
+            
             if (parts.length >= 2) {
-                const t = parseFloat(parts[0]);
-                const v = parseFloat(parts[1]);
-                if (!isNaN(t) && !isNaN(v)) {
-                    tData.push(t);
-                    vData.push(v);
+                const v = parseFloat(parts[0]);
+                const i = parseFloat(parts[1]);
+                if (!isNaN(v) && !isNaN(i)) {
+                    dataPoints.push({ v: v, i: i });
                 }
             }
         }
 
-        if (tData.length < 3) return;
-
-        const fit = performGeneralExponentialFit(tData, vData);
-
-        // --- 修正 Vmax 的邏輯 ---
-        // 充電：V(inf) = A. 所以 Vmax = A.
-        // 放電：V(0) = A + B (最高點), V(inf) = A. 所以 Vmax = A + B.
-        const vMaxVal = fit.isCharging ? fit.A : (fit.A + fit.B);
-
-        // Update UI
-        document.getElementById('resPanel').style.opacity = '1';
-        document.getElementById('resMode').innerText = fit.isCharging ? "充電" : "放電";
-        document.getElementById('resMode').style.color = fit.isCharging ? "#27ae60" : "#e74c3c";
-        document.getElementById('resTau').innerText = fit.tau.toFixed(3);
-        document.getElementById('resVmax').innerText = vMaxVal.toFixed(3);
-        document.getElementById('resR2').innerText = fit.r2.toFixed(4);
-
-        const A_str = fit.A.toFixed(3);
-        const B_abs_str = Math.abs(fit.B).toFixed(3);
-        const tau_str = fit.tau.toFixed(3);
-        const sign = fit.B >= 0 ? "+" : "-";
-        const eqHTML = `<i>V</i>(<i>t</i>) = ${A_str} ${sign} ${B_abs_str} <i>e</i><sup> -<i>t</i> / ${tau_str}</sup>`;
-        document.getElementById('resEquation').innerHTML = eqHTML;
-
-        // Theory Curve Generation
-        const tLine = [];
-        const vLine = [];
+        dataPoints.sort((a, b) => a.v - b.v);
         
-        // 限制擬和線範圍在數據範圍內
-        const minT = Math.min(...tData);
-        const maxT = Math.max(...tData);
-        const steps = 200;
+        if (dataPoints.length < 3) return;
 
-        for (let i = 0; i <= steps; i++) {
-            const t = minT + (maxT - minT) * (i / steps);
-            const v = fit.A + fit.B * Math.exp(-t / fit.tau);
-            tLine.push(t);
-            vLine.push(v);
+        const plotV = dataPoints.map(p => p.v);
+        const plotI = dataPoints.map(p => p.i);
+
+        // --- 核心分析邏輯 ---
+        const maxCurrent = Math.max(...plotI);
+        let fitData = dataPoints.filter(p => p.i > 0.05); // 初步過濾低電流
+        
+        // 檢查飽和
+        let cleanData = [];
+        for (let k = 0; k < fitData.length; k++) {
+            cleanData.push(fitData[k]);
+            if (k < fitData.length - 1) {
+                if (fitData[k].i > maxCurrent * 0.8 && fitData[k+1].i <= fitData[k].i * 1.01) {
+                    break;
+                }
+            }
         }
 
-        drawChart(tData, vData, tLine, vLine, fit.isCharging);
+        // 回歸分析
+        const regression = performExponentialRegression(cleanData);
+        const A = regression.A;
+        const B = regression.B;
+        
+        // 計算參數
+        const vOn = (Math.log(1) - Math.log(A)) / B; // @1mA
+        const vF20 = (Math.log(20) - Math.log(A)) / B; // @20mA
+        
+        let colorPred = "未知";
+        let colorStyle = "#333";
+
+        // 判定邏輯
+        if (vF20 < 1.5) { colorPred = "紅外線 (IR)"; colorStyle = "#888"; }
+        else if (vF20 < 2.05) { colorPred = "紅色 "; colorStyle = "#e74c3c";}
+        else if (vF20 < 2.45) { colorPred = "黃/橘/綠"; colorStyle = "#f39c12"; }
+        else if (vF20 < 3.5) { colorPred = "藍/白/翠綠"; colorStyle = "#3498db"; }
+        else { colorPred = "紫外線 (UV)"; colorStyle = "#9b59b6"; }
+
+        // --- 更新 UI ---
+        document.getElementById('resPanel').style.opacity = '1';
+        
+        // 顏色
+        const colorEl = document.getElementById('resColor');
+        colorEl.innerText = colorPred;
+        colorEl.style.color = colorStyle;
+        
+        // Von
+        document.getElementById('resVon').innerText = vOn.toFixed(2);
+        
+        // Vop
+        document.getElementById('resVop').innerText = vF20.toFixed(2);
+
+        // R2
+        document.getElementById('resR2').innerText = regression.r2.toFixed(4);
+
+        // 方程式
+        const aSci = A.toExponential(2); 
+        const [aBase, aExp] = aSci.split('e');
+        const B_fix = B.toFixed(1);
+        document.getElementById('resEquation').innerHTML = 
+            `<i>I</i> = ${aBase} &times; 10<sup>${parseInt(aExp)}</sup> &times; <i>e</i><sup> ${B_fix} <i>V</i></sup> <span style="font-size:1.4rem; vertical-align:middle;">(mA)</span>`;
+
+        // --- 擬和曲線數據 ---
+        const fitCurveV = [];
+        const fitCurveI = [];
+        const startV = 0; 
+        const endV = Math.max(...plotV) * 1.05; 
+        const steps = 150;
+        
+        for(let i=0; i<=steps; i++) {
+            const v = startV + (endV - startV) * (i/steps);
+            const current = A * Math.exp(B * v);
+            if(current < maxCurrent * 1.3) {
+                fitCurveV.push(v);
+                fitCurveI.push(current);
+            }
+        }
+
+        drawChart(plotV, plotI, fitCurveV, fitCurveI, colorStyle);
     }
 
-    function drawChart(tData, vData, tLine, vLine, isCharging) {
+    function performExponentialRegression(data) {
+        let n = 0, sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+        for (let p of data) {
+            if (p.i <= 0) continue; 
+            const x = p.v;
+            const y = Math.log(p.i);
+            sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
+            n++;
+        }
+        if (n < 2) return { A:0, B:0, r2:0 };
+        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+        const A = Math.exp(intercept);
+        const B = slope;
+        let ssTot = 0, ssRes = 0;
+        const yMean = sumY / n;
+        for (let p of data) {
+            const yReal = Math.log(p.i);
+            const yPred = intercept + slope * p.v;
+            ssTot += (yReal - yMean) ** 2;
+            ssRes += (yReal - yPred) ** 2;
+        }
+        const r2 = 1 - (ssRes / ssTot);
+        return { A, B, r2 };
+    }
+
+    function drawChart(rawV, rawI, fitV, fitI, colorHex) {
         const traceScatter = {
-            x: tData,
-            y: vData,
+            x: rawV,
+            y: rawI,
             mode: 'markers',
             name: '實驗數據',
-            marker: { color: '#34495e', symbol: 'circle-open', size: 6, line: { width: 1.5 } },
-            // 時間顯示到小數下一位 (.1f)，數據不顯示 fit 數據
-            hovertemplate: 't: %{x:.1f} s<br>V: %{y:.3f} V<extra></extra>' 
+            marker: { color: '#34495e', symbol: 'circle-open', size: 8, line: { width: 2 } },
+            hovertemplate: 'V: %{x:.3f} V<br>I: %{y:.3f} mA<extra></extra>' 
         };
 
         const traceLine = {
-            x: tLine,
-            y: vLine,
+            x: fitV,
+            y: fitI,
             mode: 'lines',
             name: '擬和曲線',
-            line: { color: '#e74c3c', width: 2.5 },
-            // 設定不顯示紅色曲線的 hover
+            line: { color: colorHex, width: 3 },
             hoverinfo: 'skip'
         };
 
-        const legendPos = isCharging ? 
-            { x: 0.95, y: 0.05, xanchor: 'right', yanchor: 'bottom' } : 
-            { x: 0.95, y: 0.95, xanchor: 'right', yanchor: 'top' };
+        const maxX = Math.max(...fitV, ...rawV) * 1.05;
+        const maxY = Math.max(...fitI, ...rawI) * 1.05;
+        const timesFont = "font-family: 'Times New Roman', serif";
 
         const layout = {
             autosize: true,
-            margin: { t: 30, r: 25, l: 70, b: 60 },
+            margin: { t: 30, r: 25, l: 80, b: 60 },
             font: { family: "Microsoft JhengHei, Arial", size: 12 },
             xaxis: {
-                title: { text: '時間 t (s)', standoff: 20 },
+                title: { 
+                    text: `電壓 <span style="${timesFont}"><i>V</i> (V)</span>`, 
+                    standoff: 20 
+                },
                 showline: true, linewidth: 1, linecolor: '#ccc',
                 mirror: true, showgrid: true, gridcolor: '#f0f0f0',
-                zeroline: true, zerolinecolor: '#999', zerolinewidth: 1,
+                zeroline: true, zerolinecolor: '#999',
+                ticks: 'outside',
                 rangemode: 'tozero',
-                ticks: 'outside', ticklen: 5,
-                // 不設定 tickformat 以使用預設自動行為 (整數顯整數，小數顯小數)
+                range: [0, maxX],
+                tickformat: '.1f',
+                dtick: 0.2, 
             },
             yaxis: {
-                title: { text: '電壓 V (V)', standoff: 20 },
+                title: { 
+                    text: `電流 <span style="${timesFont}"><i>I</i> (mA)</span>`, 
+                    standoff: 18 
+                },
                 showline: true, linewidth: 1, linecolor: '#ccc',
                 mirror: true, showgrid: true, gridcolor: '#f0f0f0',
-                zeroline: true, zerolinecolor: '#999', zerolinewidth: 1,
+                zeroline: true, zerolinecolor: '#999',
+                ticks: 'outside',
                 rangemode: 'tozero',
-                ticks: 'outside', ticklen: 5,
+                range: [0, maxY],
             },
             legend: {
-                ...legendPos,
-                bgcolor: 'rgba(255,255,255,0.7)',
+                x: 0.05, y: 0.95,
+                bgcolor: 'rgba(255,255,255,0.8)',
                 bordercolor: '#eee', borderwidth: 1
             },
             plot_bgcolor: '#fff',
             paper_bgcolor: '#fff',
-            // 設定 hover 模式，不顯示下方的軸標籤
             hovermode: 'closest'
         };
 
@@ -514,73 +566,6 @@
         };
 
         Plotly.react('plotDiv', [traceScatter, traceLine], layout, config);
-    }
-
-    // --- 分析演算法 ---
-    function performGeneralExponentialFit(tArr, vArr) {
-        let bestTau = 1.0;
-        let maxR2 = -Infinity;
-        let bestParams = { A: 0, B: 0 };
-
-        for (let logTau = -1; logTau <= 3; logTau += 0.05) {
-            const tau = Math.pow(10, logTau);
-            const res = linearRegressionForTau(tArr, vArr, tau);
-            if (res.r2 > maxR2) {
-                maxR2 = res.r2;
-                bestTau = tau;
-                bestParams = { A: res.A, B: res.B };
-            }
-        }
-
-        let currentTau = bestTau;
-        let step = currentTau * 0.1;
-        for (let i = 0; i < 20; i++) {
-            const tauPlus = currentTau + step;
-            const tauMinus = currentTau - step;
-            const r2Plus = linearRegressionForTau(tArr, vArr, tauPlus).r2;
-            const r2Minus = linearRegressionForTau(tArr, vArr, tauMinus).r2;
-            
-            if (r2Plus > maxR2) { maxR2 = r2Plus; currentTau = tauPlus; } 
-            else if (r2Minus > maxR2) { maxR2 = r2Minus; currentTau = tauMinus; } 
-            else { step *= 0.5; }
-        }
-        bestTau = currentTau;
-        const finalRes = linearRegressionForTau(tArr, vArr, bestTau);
-        bestParams = { A: finalRes.A, B: finalRes.B };
-
-        return {
-            tau: bestTau,
-            vFinal: bestParams.A, // 這是為了傳給外部計算邏輯用的參數 A
-            A: bestParams.A,
-            B: bestParams.B,
-            r2: maxR2,
-            isCharging: bestParams.B < 0
-        };
-    }
-
-    function linearRegressionForTau(tArr, vArr, tau) {
-        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-        const n = tArr.length;
-        for(let i=0; i<n; i++) {
-            const x = Math.exp(-tArr[i] / tau);
-            const y = vArr[i];
-            sumX += x; sumY += y; sumXY += x * y; sumXX += x * x;
-        }
-        const denominator = (n * sumXX - sumX * sumX);
-        if (denominator === 0) return { A:0, B:0, r2: -1 };
-        const B = (n * sumXY - sumX * sumY) / denominator;
-        const A = (sumY - B * sumX) / n;
-        
-        let ssTot = 0, ssRes = 0;
-        const vMean = sumY / n;
-        for(let i=0; i<n; i++) {
-            const y = vArr[i];
-            const pred = A + B * Math.exp(-tArr[i] / tau);
-            ssTot += (y - vMean) ** 2;
-            ssRes += (y - pred) ** 2;
-        }
-        const r2 = ssTot === 0 ? 0 : 1 - (ssRes / ssTot);
-        return { A, B, r2 };
     }
 </script>
 
