@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>電容充放電實驗數據分析</title>
+    <title>電容充放電實驗數據分析 (支援 Arduino)</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         :root {
@@ -265,11 +265,11 @@
                     <span class="card-title">實驗數據輸入</span>
                 </div>
                 <div class="card-body">
-                    <div class="hint">請貼上 Excel 數據 (時間 t , 電壓 V)</div>
-                    <textarea id="dataInput">
-1	0.474
-2	0.904
-3	1.29
+                    <div class="hint">支援 Excel (Tab) 或 Arduino (逗號) 格式</div>
+                    <textarea id="dataInput" placeholder="支援格式範例：&#10;&#10;Excel 格式 (Tab分隔):&#10;1     0.474&#10;2     0.904&#10;&#10;Arduino 格式 (逗號分隔):&#10;1, 0.474&#10;2, 0.904">
+1, 0.474
+2, 0.904
+3, 1.29
 4	1.632
 5	1.94
 6	2.224
@@ -396,7 +396,8 @@
         const vData = [];
 
         for (let line of lines) {
-            const parts = line.trim().split(/\s+/);
+            // [修改重點]：改為 /[,\s]+/ 以同時支援逗號與空白/Tab
+            const parts = line.trim().split(/[,\s]+/);
             if (parts.length >= 2) {
                 const t = parseFloat(parts[0]);
                 const v = parseFloat(parts[1]);
