@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學測物理科 vs 香吉試講義 命中分析</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, "Microsoft JhengHei", sans-serif;
+            background-color: #f4f6f8;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 1000px; /* 稍微加寬以容納不換行的文字 */
+            width: 100%;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: #ffffff;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .table-wrapper {
+            padding: 20px;
+            overflow-x: auto; /* 允許橫向捲動 */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* 確保在小螢幕上不會擠壓 */
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #555;
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #e9ecef;
+            white-space: nowrap; /* 標題不換行 */
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #333;
+            vertical-align: middle;
+            white-space: nowrap; /* 內容強制不換行 */
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover {
+            background-color: #f1f7ff;
+        }
+        .q-num {
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+        }
+        .stars {
+            color: #f1c40f;
+            letter-spacing: 2px;
+        }
+        .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+            background-color: #fdeaea;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 5px;
+        }
+        .page-tag {
+            background-color: #eef2f7;
+            color: #2980b9;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+            display: inline-block;
+            margin-right: 4px;
+        }
+        .summary {
+            background-color: #fdfdfd;
+            padding: 25px 35px;
+            border-top: 1px solid #e9ecef;
+            color: #444;
+            font-size: 20px; /* 字體加大 */
+            line-height: 1.8;
+        }
+        .summary strong {
+            color: #2c3e50;
+            font-size: 22px; /* 標題字體更大 */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>115學測物理科 &times; 香吉試講義</h1>
+        <p>重點觀念命中分析總表</p>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: center;">學測題號</th>
+                    <th>講義對應單元</th>
+                    <th>講義頁數</th>
+                    <th>命中程度</th>
+                    <th>分析備註</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="q-num">10</td>
+                    <td>物體運動的描述 (v-t圖)</td>
+                    <td><span class="page-tag">P.65</span> <span class="page-tag">P.67</span></td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td>範例圖形與考題高度相似，解題邏輯一致。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">11</td>
+                    <td>運動的描述 / 運動定律</td>
+                    <td><span class="page-tag">P.73</span> <span class="page-tag">P.64</span></td>
+                    <td><span class="stars">★★★★</span></td>
+                    <td>物理量方向的判斷完全覆蓋。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">12</td>
+                    <td>能量的形式 / 能量守恆</td>
+                    <td><span class="page-tag">P.161</span> <span class="page-tag">P.180</span></td>
+                    <td><span class="stars">★★★★</span></td>
+                    <td>功能定理與作功觀念完全覆蓋。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">13</td>
+                    <td>都卜勒效應</td>
+                    <td><span class="page-tag">P.138</span></td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td>圖解原理直接對應考題波源移動概念。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">14</td>
+                    <td>基本交互作用</td>
+                    <td><span class="page-tag">P.43</span> <span class="page-tag">P.27</span></td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td>四大力比較表格精準命中，無需多餘計算。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">15</td>
+                    <td>物理量的單位</td>
+                    <td><span class="page-tag">P.7</span> <span class="page-tag">P.43</span></td>
+                    <td><span class="stars">★★★★</span></td>
+                    <td>結合題目定義與講義單位表即可秒殺。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">16</td>
+                    <td>庫侖定律</td>
+                    <td><span class="page-tag">P.38</span></td>
+                    <td><span class="stars">★★★★</span></td>
+                    <td>靜電力圖形趨勢與距離平方反比概念命中。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">17</td>
+                    <td>理想氣體熱能</td>
+                    <td><span class="page-tag">P.170</span></td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td><span class="highlight">神準命中！</span>氣體平均動能公式直接命中。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">18</td>
+                    <td>質能互換</td>
+                    <td><span class="page-tag">P.176</span></td>
+                    <td><span class="stars">★★★★</span></td>
+                    <td>核反應與愛因斯坦公式完全對應。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">47</td>
+                    <td>原子能階</td>
+                    <td><span class="page-tag">P.209</span> </td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td>能階概念圖與波長轉換計算完全對應。</td>
+                </tr>
+                                <tr>
+                    <td class="q-num">48</td>
+                    <td>光子論</td>
+                    <td><span class="page-tag">P.203</span></td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td>光子能量、波長換算公式完整推導。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">49</td>
+                    <td>波的折射與干涉</td>
+                    <td><span class="page-tag">P.123</span> <span class="page-tag">P.130</span></td>
+                    <td><span class="stars">★★★★</span></td>
+                    <td>惠更斯原理、建設性干涉圖解清楚輔助作圖題。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">52</td>
+                    <td>水力發電 (位能轉換)</td>
+                    <td><span class="page-tag">P.183</span></td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td><span class="highlight">神準命中！</span>範例題型極似潮汐發電計算。</td>
+                </tr>
+                <tr>
+                    <td class="q-num">53</td>
+                    <td>電磁感應</td>
+                    <td><span class="page-tag">P.106</span> <span class="page-tag">P.108</span></td>
+                    <td><span class="stars">★★★★★</span></td>
+                    <td>實驗裝置圖與冷次定律觀念完全一致。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="summary">
+        <strong>總結評價：</strong><br>
+        這份講義在物理科的「圖表理解」與「情境應用」上表現卓越。第 52 題（潮汐發電）與第 53 題（電磁感應）幾乎是翻版重現，第 17 題與第 48 題公式更是直接命中，證明教材對於新課綱素養題型的掌握度極高，是一份高效的戰略複習教材。
+    </div>
+</div>
+
+</body>
+</html>
