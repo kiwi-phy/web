@@ -3,332 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>115學測物理命中分析 - RWD進階版</title>
+    <title>115學測物理科命中分析</title>
     <style>
-        :root {
-            --primary-dark: #2c3e50;
-            --primary-light: #3498db;
-            --accent-red: #e74c3c;
-            --bg-gray: #f4f6f8;
-            --text-main: #333;
-            --star-color: #f1c40f;
-        }
-
         body {
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-            background-color: var(--bg-gray);
-            margin: 0;
-            padding: 20px;
-            color: var(--text-main);
-            line-height: 1.6;
+            font-family: "Helvetica Neue", Helvetica, Arial, "Microsoft JhengHei", sans-serif;
+            background-color: #f4f6f8;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
         }
-
         .container {
-            max-width: 1100px;
-            margin: 0 auto;
+            max-width: 1000px;
+            width: 100%;
             background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
-
-        /* Header 響應式調整 */
         .header {
-            background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+            background: linear-gradient(135deg, #2c3e50, #3498db);
             color: #ffffff;
-            padding: 40px 20px;
+            padding: 30px;
             text-align: center;
         }
-
         .header h1 {
             margin: 0;
-            font-size: clamp(1.5rem, 5vw, 2rem);
-            letter-spacing: 1px;
+            font-size: 28px;
         }
-
         .header p {
-            margin: 15px 0 0;
-            opacity: 0.9;
-            font-size: 1.1rem;
+            margin: 10px 0 0;
+            font-size: 16px;
         }
-
-        /* 表格與卡片設計 */
         .table-wrapper {
             padding: 20px;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
         }
-
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #e9ecef;
+            text-align: left;
+        }
         th {
             background-color: #f8f9fa;
-            color: #666;
             font-weight: 600;
-            padding: 15px;
-            text-align: left;
-            border-bottom: 2px solid #eee;
         }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
-        }
-
-        tr:hover {
-            background-color: #f9fbff;
-        }
-
-        /* 內容樣式 */
         .q-num {
             font-weight: bold;
-            color: var(--primary-dark);
-            font-size: 1.1em;
+            text-align: center;
         }
-
         .stars {
-            color: var(--star-color);
-            letter-spacing: 2px;
-            font-size: 1.2em;
+            color: #f1c40f;
         }
-
-        .highlight {
-            color: var(--accent-red);
-            font-weight: bold;
-            background-color: #fdeaea;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.85em;
-        }
-
         .page-tag {
             background-color: #eef2f7;
-            color: var(--primary-light);
+            color: #2980b9;
             padding: 4px 8px;
             border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: 500;
+            font-size: 0.85em;
+            margin-right: 4px;
             display: inline-block;
-            margin: 2px;
         }
-
-        /* 總結區塊 */
+        .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+            background-color: #fdeaea;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
         .summary {
-            background-color: #fdfdfd;
-            padding: 30px;
-            border-top: 2px solid #eee;
+            padding: 25px 35px;
+            border-top: 1px solid #e9ecef;
+            font-size: 18px;
+            line-height: 1.7;
         }
 
-        .summary strong {
-            color: var(--primary-dark);
-            font-size: 1.4rem;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        /* RWD 關鍵 CSS: 手機版轉換為卡片 */
-        @media screen and (max-width: 768px) {
+        /* ===== 手機版 ===== */
+        @media (max-width: 768px) {
             body {
                 padding: 10px;
             }
-
-            table, thead, tbody, th, td, tr {
+            .header h1 {
+                font-size: 20px;
+            }
+            table thead {
+                display: none;
+            }
+            table, tbody, tr {
                 display: block;
-            }
-
-            /* 隱藏桌面版標題欄 */
-            thead tr {
-                position: absolute;
-                top: -9999px;
-                left: -9999px;
-            }
-
-            tr {
-                margin-bottom: 20px;
-                border: 1px solid #ddd;
-                border-radius: 12px;
-                background: #fff;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                padding: 10px;
-            }
-
-            td {
-                border: none;
-                border-bottom: 1px solid #f0f0f0;
-                position: relative;
-                padding-left: 40%; /* 留空間給標題 */
-                text-align: right;
-                min-height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-            }
-
-            td:last-child {
-                border-bottom: none;
-                flex-direction: column;
-                align-items: flex-start;
-                padding-left: 10px;
-                text-align: left;
-            }
-
-            /* 透過 data-label 插入標題 */
-            td::before {
-                content: attr(data-label);
-                position: absolute;
-                left: 10px;
-                width: 35%;
-                white-space: nowrap;
-                font-weight: bold;
-                color: #888;
-                text-align: left;
-                font-size: 0.9em;
-            }
-
-            /* 分析備註不需要標籤，改為滿寬度 */
-            td[data-label="分析備註"]::before {
-                position: static;
-                display: block;
-                margin-bottom: 8px;
                 width: 100%;
             }
-
-            .summary {
-                font-size: 1rem;
-                padding: 20px;
+            tbody tr {
+                margin-bottom: 15px;
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+                padding: 12px 14px;
+            }
+            tbody td {
+                display: flex;
+                justify-content: space-between;
+                padding: 6px 0;
+                border: none;
+                font-size: 14px;
+            }
+            tbody td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #666;
+                margin-right: 10px;
             }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">
-        <h1>115學測物理 &times; 香吉物理複習講義</h1>
-        <p>重點觀念命中分析總表</p>
+        <h1>115學測物理科 × 香吉物理複習講義</h1>
+        <p>重點觀念命中分析</p>
     </div>
-
     <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th>學測題號</th>
-                    <th>對應單元</th>
-                    <th>講義頁數</th>
-                    <th>命中程度</th>
-                    <th>分析備註</th>
+                    <th>題號</th><th>單元</th><th>頁數</th><th>命中</th><th>備註</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td data-label="學測題號" class="q-num">10</td>
-                    <td data-label="對應單元">物體運動的描述 (v-t圖)</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.65</span> <span class="page-tag">P.67</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註">範例圖形與考題高度相似，解題邏輯一致。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">11</td>
-                    <td data-label="對應單元">運動的描述 / 運動定律</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.73</span> <span class="page-tag">P.64</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★</span></td>
-                    <td data-label="分析備註">物理量方向的判斷完全覆蓋。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">12</td>
-                    <td data-label="對應單元">能量的形式 / 能量守恆</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.161</span> <span class="page-tag">P.180</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★</span></td>
-                    <td data-label="分析備註">功能定理與作功觀念完全覆蓋。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">13</td>
-                    <td data-label="對應單元">都卜勒效應</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.138</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註">圖解原理直接對應考題波源移動概念。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">14</td>
-                    <td data-label="對應單元">基本交互作用</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.43</span> <span class="page-tag">P.27</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註">四大力比較表格精準命中，無需多餘計算。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">15</td>
-                    <td data-label="對應單元">物理量的單位</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.7</span> <span class="page-tag">P.43</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★</span></td>
-                    <td data-label="分析備註">結合題目定義與講義單位表即可秒殺。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">16</td>
-                    <td data-label="對應單元">庫侖定律</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.38</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★</span></td>
-                    <td data-label="分析備註">靜電力圖形趨勢與距離平方反比概念命中。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">17</td>
-                    <td data-label="對應單元">理想氣體熱能</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.170</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註"><span class="highlight">神準命中！</span>氣體平均動能公式直接命中。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">18</td>
-                    <td data-label="對應單元">質能互換</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.176</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★</span></td>
-                    <td data-label="分析備註">核反應與愛因斯坦公式完全對應。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">47</td>
-                    <td data-label="對應單元">原子能階</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.209</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註">能階概念圖與波長轉換計算完全對應。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">48</td>
-                    <td data-label="對應單元">光子論</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.203</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註">光子能量、波長換算公式完整推導。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">49</td>
-                    <td data-label="對應單元">波的折射與干涉</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.123</span> <span class="page-tag">P.130</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★</span></td>
-                    <td data-label="分析備註">惠更斯原理、建設性干涉圖解清楚輔助作圖題。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">52</td>
-                    <td data-label="對應單元">水力發電 (位能轉換)</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.183</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註"><span class="highlight">神準命中！</span>範例題型極似潮汐發電計算。</td>
-                </tr>
-                <tr>
-                    <td data-label="學測題號" class="q-num">53</td>
-                    <td data-label="對應單元">電磁感應</td>
-                    <td data-label="講義頁數"><span class="page-tag">P.106</span> <span class="page-tag">P.108</span></td>
-                    <td data-label="命中程度"><span class="stars">★★★★★</span></td>
-                    <td data-label="分析備註">實驗裝置圖與冷次定律觀念完全一致。</td>
-                </tr>
-            </tbody>
+<tr><td class="q-num" data-label="題號">10</td><td data-label="單元">物體運動的描述 (v‑t 圖)</td><td data-label="頁數"><span class="page-tag">P.65</span><span class="page-tag">P.67</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註">範例圖形與考題高度相似，解題邏輯一致。</td></tr>
+<tr><td class="q-num" data-label="題號">11</td><td data-label="單元">運動的描述 / 運動定律</td><td data-label="頁數"><span class="page-tag">P.73</span><span class="page-tag">P.64</span></td><td data-label="命中"><span class="stars">★★★★</span></td><td data-label="備註">物理量方向判斷完整覆蓋。</td></tr>
+<tr><td class="q-num" data-label="題號">12</td><td data-label="單元">能量形式 / 能量守恆</td><td data-label="頁數"><span class="page-tag">P.161</span><span class="page-tag">P.180</span></td><td data-label="命中"><span class="stars">★★★★</span></td><td data-label="備註">功能定理與作功觀念完整對應。</td></tr>
+<tr><td class="q-num" data-label="題號">13</td><td data-label="單元">都卜勒效應</td><td data-label="頁數"><span class="page-tag">P.138</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註">圖解波源移動原理直接命中。</td></tr>
+<tr><td class="q-num" data-label="題號">14</td><td data-label="單元">基本交互作用</td><td data-label="頁數"><span class="page-tag">P.43</span><span class="page-tag">P.27</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註">四大力比較表精準對應。</td></tr>
+<tr><td class="q-num" data-label="題號">15</td><td data-label="單元">物理量的單位</td><td data-label="頁數"><span class="page-tag">P.7</span><span class="page-tag">P.43</span></td><td data-label="命中"><span class="stars">★★★★</span></td><td data-label="備註">單位分析即可快速解題。</td></tr>
+<tr><td class="q-num" data-label="題號">16</td><td data-label="單元">庫侖定律</td><td data-label="頁數"><span class="page-tag">P.38</span></td><td data-label="命中"><span class="stars">★★★★</span></td><td data-label="備註">距離平方反比趨勢完全命中。</td></tr>
+<tr><td class="q-num" data-label="題號">17</td><td data-label="單元">理想氣體熱能</td><td data-label="頁數"><span class="page-tag">P.170</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註"><span class="highlight">神準命中</span> 氣體平均動能公式。</td></tr>
+<tr><td class="q-num" data-label="題號">18</td><td data-label="單元">質能互換</td><td data-label="頁數"><span class="page-tag">P.176</span></td><td data-label="命中"><span class="stars">★★★★</span></td><td data-label="備註">核反應與 E=mc² 完整對應。</td></tr>
+<tr><td class="q-num" data-label="題號">47</td><td data-label="單元">原子能階</td><td data-label="頁數"><span class="page-tag">P.209</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註">能階圖與波長換算一致。</td></tr>
+<tr><td class="q-num" data-label="題號">48</td><td data-label="單元">光子論</td><td data-label="頁數"><span class="page-tag">P.203</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註">光子能量與波長公式完整推導。</td></tr>
+<tr><td class="q-num" data-label="題號">49</td><td data-label="單元">波的折射與干涉</td><td data-label="頁數"><span class="page-tag">P.123</span><span class="page-tag">P.130</span></td><td data-label="命中"><span class="stars">★★★★</span></td><td data-label="備註">惠更斯原理與干涉圖解清楚。</td></tr>
+<tr><td class="q-num" data-label="題號">52</td><td data-label="單元">水力發電（位能轉換）</td><td data-label="頁數"><span class="page-tag">P.183</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註"><span class="highlight">神準命中</span> 潮汐發電計算題型。</td></tr>
+<tr><td class="q-num" data-label="題號">53</td><td data-label="單元">電磁感應</td><td data-label="頁數"><span class="page-tag">P.106</span><span class="page-tag">P.108</span></td><td data-label="命中"><span class="stars">★★★★★</span></td><td data-label="備註">實驗裝置與冷次定律完全一致。</td></tr>
+</tbody>
         </table>
     </div>
-
     <div class="summary">
-        <strong>總結評價：</strong>
-        <p>這份講義在物理科的「圖表理解」與「情境應用」上表現卓越。第 52 題（潮汐發電）與第 53 題（電磁感應）幾乎是翻版重現，第 17 題與第 48 題公式更是直接命中，證明教材對於新課綱素養題型的掌握度極高，是一份高效的戰略複習教材。</p>
+        <strong>總結：</strong><br>
+        本講義對圖表理解與素養題掌握度極高，多題近乎原題重現，適合最後衝刺複習。
     </div>
 </div>
-
 </body>
 </html>
