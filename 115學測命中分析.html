@@ -3,109 +3,235 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>學測物理科 vs 香吉試講義 命中分析</title>
+    <title>學測物理科 vs 香吉物理複習講義命中分析</title>
     <style>
+        /* --- 全域設定 --- */
         body {
             font-family: "Helvetica Neue", Helvetica, Arial, "Microsoft JhengHei", sans-serif;
             background-color: #f4f6f8;
-            padding: 40px;
+            margin: 0;
+            padding: 20px; /* 電腦版維持適當邊距 */
             display: flex;
             justify-content: center;
+            color: #333;
         }
         .container {
-            max-width: 1000px; /* 稍微加寬以容納不換行的文字 */
+            max-width: 1280px; /* 寬度加寬 */
             width: 100%;
             background: #ffffff;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             overflow: hidden;
         }
+
+        /* --- 標題區塊 (已加大) --- */
         .header {
             background: linear-gradient(135deg, #2c3e50, #3498db);
             color: #ffffff;
-            padding: 30px;
+            padding: 40px 20px; /* 增加垂直高度 */
             text-align: center;
         }
         .header h1 {
             margin: 0;
-            font-size: 28px;
-            letter-spacing: 1px;
+            font-size: 36px; /* 加大主標題 */
+            letter-spacing: 1.5px;
+            line-height: 1.3;
+            font-weight: 800;
         }
         .header p {
-            margin: 10px 0 0;
-            opacity: 0.9;
-            font-size: 16px;
+            margin: 15px 0 0;
+            opacity: 0.95;
+            font-size: 22px; /* 加大副標題 */
+            font-weight: 500;
         }
+
+        /* --- 表格區塊 --- */
         .table-wrapper {
-            padding: 20px;
-            overflow-x: auto; /* 允許橫向捲動 */
+            padding: 10px; /* 減少外圍留白 */
+            overflow-x: auto;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px; /* 確保在小螢幕上不會擠壓 */
+            min-width: 900px;
         }
         th {
             background-color: #f8f9fa;
-            color: #555;
-            font-weight: 600;
-            padding: 15px;
+            color: #444;
+            font-weight: 700;
+            font-size: 18px; /* 表頭字體加大 */
+            padding: 12px 8px; /* 減少左右留白 */
             text-align: left;
-            border-bottom: 2px solid #e9ecef;
-            white-space: nowrap; /* 標題不換行 */
+            border-bottom: 3px solid #e9ecef;
+            white-space: nowrap;
         }
         td {
-            padding: 15px;
+            padding: 12px 8px; /* 減少儲存格左右留白，讓版面更緊湊 */
             border-bottom: 1px solid #e9ecef;
-            color: #333;
             vertical-align: middle;
-            white-space: nowrap; /* 內容強制不換行 */
-        }
-        tr:last-child td {
-            border-bottom: none;
+            font-size: 16px;
+            white-space: nowrap; /* 強制不換行 */
         }
         tr:hover {
             background-color: #f1f7ff;
         }
+
+        /* --- 標籤與裝飾樣式 --- */
         .q-num {
             font-weight: bold;
             color: #2c3e50;
             text-align: center;
+            font-size: 1.1em;
         }
         .stars {
             color: #f1c40f;
-            letter-spacing: 2px;
+            letter-spacing: 1px; /* 縮小星星間距 */
         }
         .highlight {
             color: #e74c3c;
             font-weight: bold;
             background-color: #fdeaea;
-            padding: 2px 6px;
+            padding: 4px 8px;
             border-radius: 4px;
-            font-size: 0.9em;
+            font-size: 0.95em;
             margin-right: 5px;
+            border: 1px solid #fadbd8;
         }
         .page-tag {
             background-color: #eef2f7;
             color: #2980b9;
             padding: 4px 8px;
             border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: 500;
+            font-size: 0.95em;
+            font-weight: 600;
             display: inline-block;
             margin-right: 4px;
         }
+
+        /* --- 總結區塊 (字體加大) --- */
         .summary {
             background-color: #fdfdfd;
-            padding: 25px 35px;
-            border-top: 1px solid #e9ecef;
+            padding: 30px 40px;
+            border-top: 2px solid #e9ecef;
             color: #444;
-            font-size: 20px; /* 字體加大 */
+            font-size: 22px; /* 內文加大 */
             line-height: 1.8;
         }
         .summary strong {
             color: #2c3e50;
-            font-size: 22px; /* 標題字體更大 */
+            font-size: 26px; /* 標題加大 */
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        /* --- RWD 手機版樣式 --- */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 0; /* 手機版移除 body 邊距，讓卡片滿版 */
+                background-color: #fff;
+            }
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            .header {
+                padding: 30px 15px;
+            }
+            .header h1 {
+                font-size: 28px; /* 手機版標題適度調整 */
+            }
+            .header p {
+                font-size: 18px;
+            }
+            
+            .table-wrapper {
+                padding: 10px 0; /* 移除左右留白 */
+            }
+
+            /* 強制將表格轉換為區塊顯示 */
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            
+            /* 隱藏原本的表頭 */
+            thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            /* 每一列變成一張卡片 */
+            tr {
+                margin: 0 0 15px 0; /* 卡片間距 */
+                border-bottom: 8px solid #f4f6f8; /* 用粗底線分隔卡片 */
+                background: #fff;
+            }
+            
+            td {
+                white-space: normal; /* 手機版允許換行 */
+                border: none;
+                position: relative;
+                padding: 8px 15px 8px 38%; /* 調整內距 */
+                text-align: right;
+                min-height: 24px;
+                font-size: 17px; /* 手機版字體 */
+            }
+            
+            td:last-child {
+                text-align: left;
+                padding-left: 15px;
+                padding-right: 15px;
+                padding-top: 40px;
+                padding-bottom: 20px;
+            }
+
+            /* 手機版的小標題 (偽元素) */
+            td::before {
+                position: absolute;
+                top: 8px; /* 對齊內容 */
+                left: 15px;
+                width: 30%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+                color: #7f8c8d;
+                font-size: 16px;
+            }
+
+            td:nth-of-type(1)::before { content: "學測題號"; color: #2980b9; }
+            td:nth-of-type(2)::before { content: "對應單元"; }
+            td:nth-of-type(3)::before { content: "講義頁數"; }
+            td:nth-of-type(4)::before { content: "命中程度"; }
+            td:nth-of-type(5)::before { 
+                content: "分析備註"; 
+                width: 100%;
+                border-bottom: 2px solid #3498db;
+                display: block;
+                padding-bottom: 5px;
+                top: 5px;
+                left: 15px;
+                color: #2c3e50;
+            }
+            
+            .q-num {
+                font-size: 1.3em;
+                color: #e74c3c;
+            }
+            
+            td:nth-of-type(5) {
+                background-color: #fafafa;
+                color: #555;
+                line-height: 1.6;
+            }
+
+            .summary {
+                padding: 20px;
+                font-size: 18px;
+            }
+            .summary strong {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
@@ -189,7 +315,7 @@
                     <td class="q-num">18</td>
                     <td>質能互換</td>
                     <td><span class="page-tag">P.176</span></td>
-                    <td><span class="stars">★★★★</span></td>
+                    <td><span class="stars">★★★★★</span></td>
                     <td>核反應與愛因斯坦公式完全對應。</td>
                 </tr>
                 <tr>
@@ -199,7 +325,7 @@
                     <td><span class="stars">★★★★★</span></td>
                     <td>能階概念圖與波長轉換計算完全對應。</td>
                 </tr>
-                                <tr>
+                <tr>
                     <td class="q-num">48</td>
                     <td>光子論</td>
                     <td><span class="page-tag">P.203</span></td>
@@ -232,7 +358,7 @@
     </div>
 
     <div class="summary">
-        <strong>總結評價：</strong><br>
+        <strong>總結評價：</strong>
         這份講義在物理科的「圖表理解」與「情境應用」上表現卓越。第 52 題（潮汐發電）與第 53 題（電磁感應）幾乎是翻版重現，第 17 題與第 48 題公式更是直接命中，證明教材對於新課綱素養題型的掌握度極高，是一份高效的戰略複習教材。
     </div>
 </div>
