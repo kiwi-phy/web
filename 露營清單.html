@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏕️ 我的專屬四人露營清單</title>
+    <style>
+        /* 基礎版面設定 */
+        body {
+            font-family: '微軟正黑體', 'Helvetica Neue', sans-serif;
+            background-color: #f4f1ea;
+            color: #4a4a4a;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px; /* 適合手機與平版寬度 */
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #556b2f; /* 露營風綠色 */
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        
+        /* 分類區塊設定 */
+        .category {
+            margin-bottom: 25px;
+        }
+        .category h2 {
+            font-size: 18px;
+            color: #c75233; /* 磚紅色 */
+            border-bottom: 2px solid #f0e9df;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* 項目設定 */
+        .item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 10px;
+            background: #fafaf8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 16px;
+        }
+        .item:active { background: #eef0e6; }
+        
+        /* 隱藏原生核取方塊，使用自訂樣式 */
+        .item input {
+            width: 22px;
+            height: 22px;
+            margin-right: 15px;
+            accent-color: #556b2f;
+            cursor: pointer;
+        }
+        
+        /* 打勾後的樣式 */
+        .item.checked span {
+            text-decoration: line-through;
+            color: #b0b0b0;
+        }
+
+        /* 重置按鈕 */
+        .reset-btn {
+            width: 100%;
+            background-color: #556b2f;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .reset-btn:hover { background-color: #455726; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏕️ 輕裝出發！露營清單</h1>
+    <p class="subtitle">搭配 $4,100 野奢套裝專用（進度會自動儲存）</p>
+
+    <div id="checklist-container"></div>
+
+    <button class="reset-btn" onclick="resetChecklist()">🔄 全部清空重置</button>
+</div>
+
+<script>
+    // 您的專屬清單資料
+    const campingData =[
+        {
+            category: "🛏️ 一、 睡個好覺（寢具與保暖）",
+            items:["睡袋 或 棉被 (山上溫差大)", "個人枕頭", "保暖/消暑小物", "耳塞、眼罩"]
+        },
+        {
+            category: "🍳 二、 吃頓好料（炊具與餐具）",
+            items:["鍋具組 (平底鍋、湯鍋)", "煮水壺", "料理刀、砧板、剪刀", "大湯勺、大夾子、鍋鏟", "個人餐具 (碗、筷、盤、杯)", "洗碗精、海綿、抹布、洗菜籃", "晾碗籃 或 磁吸掛勾", "備用瓦斯罐 (建議多帶2-3罐)", "茶包、咖啡包、食材、調味料"]
+        },
+        {
+            category: "💡 三、 生活與小工具（照明與雜物）",
+            items:["手電筒 或 頭燈", "青蛙燈 (防絆倒)", "磁吸掛勾", "收納置物箱", "野餐墊", "手機充電線、行動電源"]
+        },
+        {
+            category: "🧴 四、 個人盥洗與衛生防蚊",
+            items:["牙刷、牙膏、洗面乳", "洗髮精、沐浴乳", "毛巾 / 浴巾", "拖鞋", "抽取式衛生紙、濕紙巾、垃圾袋", "乾洗手、酒精噴霧", "防蚊液、蚊香、防蚊急救包", "吹風機"]
+        },
+        {
+            category: "👕 五、 衣物與娛樂",
+            items:["換洗衣物、內衣褲、襪子", "防風/保暖外套", "帽子、太陽眼鏡、防曬乳", "輕便雨衣 或 雨傘"]
+        }
+    ];
+
+    const container = document.getElementById('checklist-container');
+
+    // 初始化讀取清單
+    function renderChecklist() {
+        container.innerHTML = '';
+        // 從瀏覽器 LocalStorage 讀取記憶的進度
+        const savedProgress = JSON.parse(localStorage.getItem('campingProgress')) || {};
+
+        campingData.forEach((section, sectionIndex) => {
+            // 建立分類標題
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category';
+            categoryDiv.innerHTML = `<h2>${section.category}</h2>`;
+
+            // 建立項目
+            section.items.forEach((itemText, itemIndex) => {
+                const itemId = `item-${sectionIndex}-${itemIndex}`;
+                const isChecked = savedProgress[itemId] ? 'checked' : '';
+
+                const itemDiv = document.createElement('label');
+                itemDiv.className = `item ${isChecked}`;
+                itemDiv.innerHTML = `
+                    <input type="checkbox" id="${itemId}" onchange="toggleCheck(this)" ${isChecked ? 'checked' : ''}>
+                    <span>${itemText}</span>
+                `;
+                categoryDiv.appendChild(itemDiv);
+            });
+
+            container.appendChild(categoryDiv);
+        });
+    }
+
+    // 點擊打勾/取消打勾的動作
+    function toggleCheck(checkbox) {
+        const itemDiv = checkbox.parentElement;
+        if (checkbox.checked) {
+            itemDiv.classList.add('checked');
+        } else {
+            itemDiv.classList.remove('checked');
+        }
+        saveProgress();
+    }
+
+    // 儲存進度到手機/電腦瀏覽器裡
+    function saveProgress() {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const progress = {};
+        checkboxes.forEach(box => {
+            progress[box.id] = box.checked;
+        });
+        localStorage.setItem('campingProgress', JSON.stringify(progress));
+    }
+
+    // 清空所有打勾紀錄
+    function resetChecklist() {
+        if(confirm("確定要清空所有打勾紀錄嗎？")) {
+            localStorage.removeItem('campingProgress');
+            renderChecklist(); // 重新整理畫面
+        }
+    }
+
+    // 網頁載入時執行
+    renderChecklist();
+</script>
+
+</body>
+</html>
