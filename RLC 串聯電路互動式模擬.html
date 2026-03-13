@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLC 串聯電路互動式模擬</title>
+    <style>
+        /* --- Global Styles --- */
+        :root {
+            --panel-border-color: #dde1e2;
+            --primary-text-color: #2c3e50;
+            --secondary-text-color: #34495e;
+            --accent-color: #007bff;
+            --accent-color-dark: #0056b3;
+            --radio-selected-color: #3ba0e6; /* 單選按鈕選取時的藍色 */
+            --radio-border-color: #8c98a4;   /* 單選按鈕未選取時的灰色 */
+            
+            /* 示波器專用變數 */
+            --scope-bg: #050505;
+            --grid-color: #2a2a2a;
+            --color-vin: #ffd700;
+            --color-vr: #00ffff;
+            --color-vl: #00ff00; /* 電感：綠色 */
+            --color-vc: #ff00ff; /* 電容：桃紅 */
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; 
+        }
+        body { 
+            background-color: #f0f2f5; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, 'Microsoft JhengHei', '微軟正黑體'; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            padding: 10px 15px;
+            box-sizing: border-box;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 1400px;
+            flex-grow: 1; 
+            min-height: 0; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
+            overflow: hidden; 
+            border: 1px solid var(--panel-border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* --- Header --- */
+        .header { 
+            background-color: #314558; 
+            color: white; 
+            padding: 12px 25px;
+            text-align: center; 
+            flex-shrink: 0;
+        }
+        .header h1 { 
+            margin: 0; font-size: 2em; 
+            font-weight: 600;
+        }
+        
+        /* --- Main Layout --- */
+        .main-content {
+            flex-grow: 1; 
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) 1fr;
+            gap: 20px;
+            padding: 15px 20px; 
+            align-items: stretch;
+            min-height: 0; 
+        }
+
+        /* --- Left: Simulation View Panel (示波器區) --- */
+        .view-panel {
+            padding: 15px; border-radius: 8px;
+            border: 1px solid var(--panel-border-color);
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            background-color: #f9fafb;
+        }
+        .view-panel h3 {
+            color: var(--primary-text-color); margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px; margin-bottom: 12px; font-size: 1.15em;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .canvas-wrapper {
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column;
+            min-height: 0; position: relative;
+            border: 2px solid #34495e; border-radius: 8px;
+            overflow: hidden; 
+            background-color: var(--scope-bg);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        #scopeCanvas { 
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .scope-info {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-family: monospace;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            pointer-events: none;
+        }
+
+        /* 底部控制鈕與開關 - 左右分離佈局 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            margin-top: 12px;
+            gap: 15px;
+        }
+
+        /* 左側：兩行開關網格 */
+        .toggles {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: auto auto; 
+            gap: 10px 20px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            flex-grow: 1;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95em;
+            color: var(--primary-text-color);
+        }
+
+        .toggle-color-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        /* 右側：兩行按鈕區 */
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .zoom-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .auto-btn {
+            width: 100%;
+            padding: 10px !important;
+            font-size: 1em !important;
+            letter-spacing: 1px;
+        }
+
+        /* --- Right: Sidebar with Control Panels --- */
+        .sidebar {
+            display: flex; flex-direction: column;
+            gap: 15px;
+            min-width: 320px;
+            overflow-y: auto;
+        }
+        .panel {
+            padding: 15px; 
+            border-radius: 8px;
+            border: 1px solid var(--panel-border-color);
+            background-color: #f9fafb;
+            display: flex; flex-direction: column;
+        }
+        .panel h3 {
+            color: var(--primary-text-color); margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px; margin-bottom: 15px; font-size: 1.15em;
+        }
+
+        .control-group { margin-bottom: 16px; }
+        .control-group:last-child { margin-bottom: 0; }
+        
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--primary-text-color);
+            margin-bottom: 5px;
+        }
+        /* 確保數值顯示是藍色，但若是標題則強制維持原色 */
+        .control-header span:last-child:not(.title-only) {
+            color: var(--accent-color);
+        }
+
+        /* 自訂圓形單選按鈕設計 */
+        .radio-group {
+            display: flex;
+            gap: 25px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .custom-radio {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 1.05em;
+            font-weight: 600;
+            color: var(--primary-text-color);
+        }
+
+        .custom-radio input[type="radio"] {
+            display: none; /* 隱藏原生圓鈕 */
+        }
+
+        .radio-mark {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2.5px solid var(--radio-border-color); /* 未選取時灰色外環 */
+            position: relative;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        /* 選取狀態 */
+        .custom-radio input[type="radio"]:checked + .radio-mark {
+            border-color: var(--radio-selected-color); /* 藍色外環 */
+        }
+
+        /* 選取時內部的藍色實心圓 */
+        .custom-radio input[type="radio"]:checked + .radio-mark::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background-color: var(--radio-selected-color);
+            border-radius: 50%;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        /* 理論計算結果區 */
+        .calc-panel {
+            background-color: white;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            font-size: 0.95rem;
+            color: var(--secondary-text-color);
+        }
+
+        .calc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .calc-value {
+            font-weight: bold;
+            color: var(--primary-text-color);
+        }
+
+        /* --- Buttons --- */
+        button {
+            border: none; padding: 8px 12px; border-radius: 6px;
+            font-weight: bold; cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            font-size: 0.9em;
+            background-color: #e0e4e8; border: 1px solid #ccc; color: #333;
+            white-space: nowrap;
+        }
+        button:hover { background-color: #d1d8dd; }
+        button:active { transform: scale(0.97); }
+
+        button.btn-primary {
+            background-color: var(--accent-color); 
+            color: white; 
+            border-color: var(--accent-color-dark);
+        }
+        button.btn-primary:hover { background-color: var(--accent-color-dark); }
+
+        /* --- Footer --- */
+        footer {
+            flex-shrink: 0; 
+            width: 100%; 
+            text-align: center;
+            padding: 8px 0;
+            color: #7f8c8d; 
+            font-size: 0.9em;
+        }
+        footer p { margin: 0; }
+
+        @media screen and (max-width: 1200px) {
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .zoom-buttons { grid-template-columns: 1fr 1fr; }
+        }
+        @media screen and (max-width: 1100px) {
+            html, body { height: auto; overflow: auto; }
+            body { padding: 0; }
+            .container { width: 100%; height: auto; min-height: 100vh; border-radius: 0; max-height: none; }
+            .main-content { grid-template-columns: 1fr; padding: 15px; }
+            .sidebar { min-width: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>RLC 串聯電路互動式模擬</h1>
+        </header>
+
+        <main class="main-content">
+            <section class="view-panel">
+                <h3>
+                    <span>示波器觀察區</span>
+                </h3>
+                
+                <div class="canvas-wrapper">
+                    <canvas id="scopeCanvas"></canvas>
+                    <div class="scope-info" id="scopeInfo">
+                        Time: 0.5 ms/div<br>
+                        Volts: 2 V/div
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <!-- 左半部開關區：2行設計 -->
+                    <div class="toggles">
+                        <label class="toggle-item">
+                            <input type="checkbox" id="chkVin" checked>
+                            <div class="toggle-color-box" style="background: var(--color-vin);"></div>
+                            <span>源端電壓 (V<sub>in</sub>)</span>
+                        </label>
+                        <label class="toggle-item">
+                            <input type="checkbox" id="chkVr">
+                            <div class="toggle-color-box" style="background: var(--color-vr);"></div>
+                            <span>電阻端電壓 (V<sub>R</sub>)</span>
+                        </label>
+                        <label class="toggle-item">
+                            <input type="checkbox" id="chkVl" checked>
+                            <div class="toggle-color-box" style="background: var(--color-vl);"></div>
+                            <span>電感端電壓 (V<sub>L</sub>)</span>
+                        </label>
+                        <label class="toggle-item">
+                            <input type="checkbox" id="chkVc">
+                            <div class="toggle-color-box" style="background: var(--color-vc);"></div>
+                            <span>電容端電壓 (V<sub>C</sub>)</span>
+                        </label>
+                    </div>
+
+                    <!-- 右半部控制區：2行設計 -->
+                    <div class="buttons-container">
+                        <div class="zoom-buttons">
+                            <button onclick="zoomTime('in')">放大時間</button>
+                            <button onclick="zoomTime('out')">縮小時間</button>
+                            <button onclick="zoomVolts('in')">放大電壓</button>
+                            <button onclick="zoomVolts('out')">縮小電壓</button>
+                        </div>
+                        <button class="btn-primary auto-btn" onclick="autoScale()">自動調整 (Auto)</button>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="sidebar">
+                <div class="panel">
+                    <h3>電路參數設定</h3>
+
+                    <!-- 訊號波形單選按鈕 -->
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span class="title-only" style="color: var(--primary-text-color);">訊號波形</span>
+                        </div>
+                        <div class="radio-group">
+                            <label class="custom-radio">
+                                <input type="radio" name="signalType" value="square" checked>
+                                <span class="radio-mark"></span>
+                                方波
+                            </label>
+                            <label class="custom-radio">
+                                <input type="radio" name="signalType" value="sine">
+                                <span class="radio-mark"></span>
+                                正弦波
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 頻率與電壓 -->
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span>訊號頻率 (Freq)</span>
+                            <span id="valF">500 Hz</span>
+                        </div>
+                        <input type="range" id="sliderF" min="100" max="5000" value="500" step="50">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span>訊號電壓幅值 (V)</span>
+                            <span id="valV">5 V</span>
+                        </div>
+                        <input type="range" id="sliderV" min="1" max="20" value="5" step="0.5">
+                    </div>
+
+                    <!-- RLC 滑桿群 -->
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span>電阻 (R)</span>
+                            <span id="valR">500 Ω</span>
+                        </div>
+                        <input type="range" id="sliderR" min="10" max="4400" value="500" step="10">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span>電感 (L)</span>
+                            <span id="valL">50 mH</span>
+                        </div>
+                        <input type="range" id="sliderL" min="10" max="100" value="50" step="1">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-header">
+                            <span>電容 (C)</span>
+                            <span id="valC">10 nF</span>
+                        </div>
+                        <input type="range" id="sliderC" min="10" max="100" value="10" step="1">
+                    </div>
+                </div>
+
+                <div class="panel" style="flex-grow: 1;">
+                    <h3>理論計算結果</h3>
+                    <div class="calc-panel">
+                        <div class="calc-item">
+                            <span>共振頻率 (f<sub>0</sub>)</span>
+                            <span class="calc-value" id="calcResFreq">-- Hz</span>
+                        </div>
+                        <div class="calc-item">
+                            <span>阻尼衰減係數 (α)</span>
+                            <span class="calc-value" id="calcAlpha">-- rad/s</span>
+                        </div>
+                        <div class="calc-item">
+                            <span>阻尼比 (ζ)</span>
+                            <span class="calc-value" id="calcZeta">--</span>
+                        </div>
+                        <div class="calc-item">
+                            <span>系統狀態</span>
+                            <span class="calc-value" id="calcState">--</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+    
+    <footer>
+        <p>Interactive Physics Simulation © 2026</p>
+    </footer>
+
+<script>
+    // --- 介面與畫布設定 ---
+    const canvas = document.getElementById('scopeCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 參數狀態
+    let pR = 500, pL = 50, pC = 10, pF = 500, pV = 5;
+    let pSignal = 'square';
+    
+    // 示波器顯示狀態
+    const SCOPE_DIVS_X = 12;
+    const SCOPE_DIVS_Y = 10;
+    
+    // 標準縮放倍率級距
+    const tDivSteps =[0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]; 
+    const vDivSteps =[1, 2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 40, 50, 100]; 
+    
+    let timePerDiv = 0.5;
+    let voltsPerDiv = 2;  
+    
+    // 模擬資料深度：已從 30ms 大幅擴增為 80ms (解決低頻下 AutoScale 波形不全的問題)
+    const SIM_DURATION = 0.08; 
+    const DT = 2e-7; 
+    const STEPS = Math.floor(SIM_DURATION / DT);
+    
+    const timeData = new Float32Array(STEPS);
+    const vinData = new Float32Array(STEPS);
+    const vrData = new Float32Array(STEPS);
+    const vlData = new Float32Array(STEPS);
+    const vcData = new Float32Array(STEPS);
+    let triggerIndex = 0;
+
+    // --- 取得 DOM 元素 ---
+    const radiosSignal = document.getElementsByName('signalType');
+    const sliders = {
+        R: document.getElementById('sliderR'),
+        L: document.getElementById('sliderL'),
+        C: document.getElementById('sliderC'),
+        F: document.getElementById('sliderF'),
+        V: document.getElementById('sliderV')
+    };
+    
+    const vals = {
+        R: document.getElementById('valR'),
+        L: document.getElementById('valL'),
+        C: document.getElementById('valC'),
+        F: document.getElementById('valF'),
+        V: document.getElementById('valV')
+    };
+
+    const chk = {
+        Vin: document.getElementById('chkVin'),
+        Vr: document.getElementById('chkVr'),
+        Vl: document.getElementById('chkVl'),
+        Vc: document.getElementById('chkVc')
+    };
+
+    // --- 事件監聽器綁定 ---
+    function bindEvents() {
+        window.addEventListener('resize', resizeCanvas);
+        
+        // 單選按鈕事件
+        radiosSignal.forEach(radio => {
+            radio.addEventListener('change', () => {
+                updateValues();
+                runSimulation();
+                autoScale(); // 切換波形時自動調整至最佳畫面
+            });
+        });
+
+        // 滑桿事件
+        Object.keys(sliders).forEach(key => {
+            sliders[key].addEventListener('input', () => {
+                updateValues();
+                runSimulation();
+                drawScope();
+            });
+        });
+
+        // 開關事件
+        Object.keys(chk).forEach(key => {
+            chk[key].addEventListener('change', drawScope);
+        });
+    }
+
+    // 更新顯示數值並擷取變數
+    function updateValues() {
+        pSignal = document.querySelector('input[name="signalType"]:checked').value;
+        pR = parseFloat(sliders.R.value);
+        pL = parseFloat(sliders.L.value);
+        pC = parseFloat(sliders.C.value);
+        pF = parseFloat(sliders.F.value);
+        pV = parseFloat(sliders.V.value);
+
+        vals.R.textContent = pR + " Ω";
+        vals.L.textContent = pL + " mH";
+        vals.C.textContent = pC + " nF";
+        vals.F.textContent = pF + " Hz";
+        vals.V.textContent = pV + " V";
+    }
+
+    function resizeCanvas() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        drawScope();
+    }
+
+    // --- 物理模擬核心 (Runge-Kutta 4th Order) ---
+    function runSimulation() {
+        const R = pR;
+        const L = pL * 1e-3; 
+        const C = pC * 1e-9; 
+        const Vamp = pV;
+        const period = 1 / pF;
+        const w = 2 * Math.PI * pF;
+
+        let v_c = 0;
+        let i = 0;
+
+        for (let step = 0; step < STEPS; step++) {
+            let t = step * DT;
+
+            // 產生對應訊號
+            let v_in = pSignal === 'square' 
+                ? ((t % period) < (period / 2) ? Vamp : 0)
+                : Vamp * Math.sin(w * t);
+
+            // RK4 法
+            let k1_v = i / C;
+            let k1_i = (v_in - R * i - v_c) / L;
+
+            let t_mid = t + DT / 2;
+            let v_in_mid = pSignal === 'square' 
+                ? ((t_mid % period) < (period / 2) ? Vamp : 0)
+                : Vamp * Math.sin(w * t_mid);
+
+            let k2_v = (i + k1_i * DT / 2) / C;
+            let k2_i = (v_in_mid - R * (i + k1_i * DT / 2) - (v_c + k1_v * DT / 2)) / L;
+
+            let k3_v = (i + k2_i * DT / 2) / C;
+            let k3_i = (v_in_mid - R * (i + k2_i * DT / 2) - (v_c + k2_v * DT / 2)) / L;
+
+            let t_end = t + DT;
+            let v_in_end = pSignal === 'square' 
+                ? ((t_end % period) < (period / 2) ? Vamp : 0)
+                : Vamp * Math.sin(w * t_end);
+
+            let k4_v = (i + k3_i * DT) / C;
+            let k4_i = (v_in_end - R * (i + k3_i * DT) - (v_c + k3_v * DT)) / L;
+
+            v_c += (DT / 6) * (k1_v + 2 * k2_v + 2 * k3_v + k4_v);
+            i += (DT / 6) * (k1_i + 2 * k2_i + 2 * k3_i + k4_i);
+
+            let v_r = i * R;
+            let v_l = v_in - v_r - v_c;
+
+            timeData[step] = t;
+            vinData[step] = v_in;
+            vrData[step] = v_r;
+            vlData[step] = v_l;
+            vcData[step] = v_c;
+        }
+
+        // 尋找觸發點 Trigger (自動適應波形的上升緣)
+        triggerIndex = 0;
+        const startStep = Math.floor(0.01 / DT); // 避開最初 10ms 暫態
+        const threshold = pSignal === 'square' ? pV * 0.5 : 0;
+        for(let s = startStep; s < STEPS - 1; s++) {
+            if(vinData[s] < threshold && vinData[s+1] >= threshold) {
+                triggerIndex = s;
+                break;
+            }
+        }
+
+        updateCalculations(R, L, C);
+    }
+
+    // --- 計算物理量理論值 ---
+    function updateCalculations(R, L, C) {
+        const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+        const alpha = R / (2 * L);
+        const w0 = 1 / Math.sqrt(L * C);
+        const zeta = alpha / w0;
+
+        document.getElementById('calcResFreq').textContent = f0 > 1000 
+            ? (f0/1000).toFixed(2) + " kHz" 
+            : f0.toFixed(2) + " Hz";
+            
+        document.getElementById('calcAlpha').textContent = alpha.toFixed(0) + " rad/s";
+        document.getElementById('calcZeta').textContent = zeta.toFixed(3);
+
+        let stateText = "";
+        let stateColor = "";
+        if (Math.abs(zeta - 1) < 0.05) {
+            stateText = "臨界阻尼 (Critically Damped)";
+            stateColor = "#d35400"; 
+        } else if (zeta < 1) {
+            stateText = "欠阻尼 (Underdamped)";
+            stateColor = "#27ae60"; 
+        } else {
+            stateText = "過阻尼 (Overdamped)";
+            stateColor = "#2980b9"; 
+        }
+        
+        const stateEl = document.getElementById('calcState');
+        stateEl.textContent = stateText;
+        stateEl.style.color = stateColor;
+    }
+
+    // --- 按鈕縮放控制 ---
+    function zoomTime(dir) {
+        let idx = tDivSteps.findIndex(t => t >= timePerDiv);
+        if(idx === -1) idx = tDivSteps.length - 1;
+
+        if (dir === 'in' && idx > 0) timePerDiv = tDivSteps[idx - 1]; 
+        else if (dir === 'out' && idx < tDivSteps.length - 1) timePerDiv = tDivSteps[idx + 1]; 
+        
+        drawScope();
+    }
+
+    function zoomVolts(dir) {
+        let idx = vDivSteps.findIndex(v => v >= voltsPerDiv);
+        if(idx === -1) idx = vDivSteps.length - 1;
+
+        if (dir === 'in' && idx > 0) voltsPerDiv = vDivSteps[idx - 1]; 
+        else if (dir === 'out' && idx < vDivSteps.length - 1) voltsPerDiv = vDivSteps[idx + 1]; 
+        
+        drawScope();
+    }
+
+    function autoScale() {
+        // 1. 調整時間軸
+        const period_ms = 1000 / pF;
+        const targetTotalTime_ms = period_ms * 2.5; // 目標顯示 2.5 個週期
+        const targetTimePerDiv = targetTotalTime_ms / SCOPE_DIVS_X; 
+        timePerDiv = tDivSteps.find(t => t >= targetTimePerDiv) || targetTimePerDiv;
+
+        // 2. 調整電壓軸
+        let maxV = 0.1, minV = -0.1;
+        let pointsToView = Math.floor((timePerDiv * SCOPE_DIVS_X * 1e-3) / DT);
+        let endIdx = Math.min(STEPS, triggerIndex + pointsToView);
+
+        for (let i = triggerIndex; i < endIdx; i++) {
+            if (chk.Vin.checked) { maxV = Math.max(maxV, vinData[i]); minV = Math.min(minV, vinData[i]); }
+            if (chk.Vr.checked)  { maxV = Math.max(maxV, vrData[i]);  minV = Math.min(minV, vrData[i]);  }
+            if (chk.Vl.checked)  { maxV = Math.max(maxV, vlData[i]);  minV = Math.min(minV, vlData[i]);  }
+            if (chk.Vc.checked)  { maxV = Math.max(maxV, vcData[i]);  minV = Math.min(minV, vcData[i]);  }
+        }
+
+        // 以 0V 水平線為基準推估 (上方7格，下方3格容裕)
+        let targetVPerDiv = Math.max(maxV / 6.5, Math.abs(minV) / 2.5);
+        voltsPerDiv = vDivSteps.find(v => v >= targetVPerDiv) || Math.ceil(targetVPerDiv);
+        if (voltsPerDiv < 1) voltsPerDiv = 1; 
+        
+        drawScope();
+    }
+
+    // --- 繪製示波器畫面 ---
+    function drawScope() {
+        if (!ctx) return;
+        const w = canvas.width;
+        const h = canvas.height;
+        
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--scope-bg').trim();
+        ctx.fillRect(0, 0, w, h);
+
+        const divW = w / SCOPE_DIVS_X; 
+        const divH = h / SCOPE_DIVS_Y; 
+        
+        // 設定 0V 的基準線：在由上往下第 7 條水平線
+        const zeroY = 7 * divH;
+
+        // 畫網格 
+        ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid-color').trim();
+        ctx.lineWidth = 1 * window.devicePixelRatio;
+        ctx.beginPath();
+        for(let i = 1; i < SCOPE_DIVS_X; i++) {
+            ctx.moveTo(i * divW, 0);
+            ctx.lineTo(i * divW, h);
+        }
+        for(let i = 1; i < SCOPE_DIVS_Y; i++) {
+            ctx.moveTo(0, i * divH);
+            ctx.lineTo(w, i * divH);
+        }
+        ctx.stroke();
+
+        // 特別標示 0V 基準水平線與中央垂直線
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2 * window.devicePixelRatio;
+        ctx.beginPath();
+        ctx.moveTo(0, zeroY);
+        ctx.lineTo(w, zeroY);
+        ctx.moveTo(w/2, 0);
+        ctx.lineTo(w/2, h);
+        ctx.stroke();
+
+        const totalTimeScreen = timePerDiv * SCOPE_DIVS_X * 1e-3; 
+        const maxDrawSteps = Math.floor(totalTimeScreen / DT);
+        const drawEndIdx = Math.min(STEPS, triggerIndex + maxDrawSteps);
+        const yPxPerVolt = divH / voltsPerDiv;
+        const stepSize = Math.max(1, Math.floor(maxDrawSteps / (w * 2)));
+
+        function drawWaveform(dataArray, color) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2 * window.devicePixelRatio;
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            let started = false;
+
+            for (let i = triggerIndex; i < drawEndIdx; i += stepSize) {
+                const t = timeData[i] - timeData[triggerIndex];
+                const x = (t / totalTimeScreen) * w;
+                const y = zeroY - (dataArray[i] * yPxPerVolt);
+
+                if (!started) {
+                    ctx.moveTo(x, y);
+                    started = true;
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.stroke();
+        }
+
+        // 依使用者勾選繪製波形
+        const style = getComputedStyle(document.documentElement);
+        if (chk.Vin.checked) drawWaveform(vinData, style.getPropertyValue('--color-vin').trim());
+        if (chk.Vc.checked)  drawWaveform(vcData, style.getPropertyValue('--color-vc').trim());
+        if (chk.Vl.checked)  drawWaveform(vlData, style.getPropertyValue('--color-vl').trim());
+        if (chk.Vr.checked)  drawWaveform(vrData, style.getPropertyValue('--color-vr').trim());
+
+        document.getElementById('scopeInfo').innerHTML = 
+            `Time:  ${timePerDiv >= 1 ? timePerDiv.toFixed(1) : timePerDiv.toFixed(2)} ms/div<br>` +
+            `Volts: ${Math.round(voltsPerDiv)} V/div`;
+    }
+
+    // --- 初始化 ---
+    window.onload = () => {
+        bindEvents();
+        updateValues();
+        resizeCanvas();
+        runSimulation();
+        autoScale(); 
+    };
+
+</script>
+</body>
+</html>
