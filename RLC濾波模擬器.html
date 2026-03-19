@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLC 濾波器頻率響應模擬</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 調整 body 讓內容置中，並且在大螢幕時限制大小 */
+        body { 
+            margin: 0; 
+            padding: 2vh 2vw; 
+            min-height: 100vh; 
+            background-color: #f0f2f5; 
+            font-size: 16px; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, 'Microsoft JhengHei', '微軟正黑體'; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            box-sizing: border-box; 
+        }
+        
+        /* 容器本身佔滿空間，但限制在 1300x800 左右 */
+        .container { 
+            width: 100%; 
+            max-width: 1300px;
+            height: 100vh;
+            max-height: 800px;
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); 
+            border: 1px solid #d1d9e6; 
+            overflow: hidden; 
+            min-height: 0;
+        }
+        
+        .header { background: linear-gradient(135deg, #34495e, #2c3e50); color: white; padding: 10px 20px; text-align: center; flex-shrink: 0; }
+        .header h1 { margin: 0; font-size: 1.8em; } 
+        .header p { margin: 5px 0 0; color: #bdc3c7; font-size: 0.95em; }
+
+        .main-content { display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; padding: 12px; flex: 1; min-height: 0; }
+        .left-column, .right-column { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+        
+        .panel { padding: 12px; border-radius: 8px; border: 1px solid #dde1e2; background-color: #f9fafb; display: flex; flex-direction: column; min-height: 0; }
+        .view-panel { padding: 10px; border-radius: 8px; border: 1px solid #dde1e2; display: flex; flex-direction: column; background-color: #fff; min-height: 0; }
+        
+        .panel h3, .view-panel h3 { color: #2c3e50; margin-top: 0; border-bottom: 2px solid #3498db; padding-bottom: 8px; margin-bottom: 12px; font-size: 1.1em; flex-shrink: 0; }
+
+        /* 左上：圖表區 */
+        .plot-container { flex: 0.8; display: flex; flex-direction: column; }
+        .canvas-wrapper { flex: 1; position: relative; width: 100%; min-height: 0; }
+
+        /* 左下：輸入訊號調整 */
+        .input-panel { flex: 0.2; background-color: #e1f5fe; border-color: #b3e5fc; justify-content: center; }
+        
+        .control-group { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .control-group label { flex-basis: 90px; flex-shrink: 0; font-weight: bold; color: #34495e; font-size: 0.95em; margin-bottom: 0; white-space: nowrap; }
+        .slider-container { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+        
+        .slider { width: 100%; -webkit-appearance: none; background: #d7dbdf; height: 8px; border-radius: 4px; outline: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        .slider::-moz-range-thumb { width: 22px; height: 22px; cursor: pointer; border-radius: 50%; background: #3498db;}
+        
+        .value-display { font-weight: bold; color: #c0392b; background-color: #fff; padding: 4px 8px; border-radius: 5px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); min-width: 75px; text-align: center; font-family: monospace; font-size: 1em; }
+
+        /* 右下：Radio Group */
+        .radio-group-container { flex-shrink: 0; margin-bottom: 12px; }
+        .radio-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-left: 2px; }
+        .radio-group label { display: flex; align-items: center; cursor: pointer; font-size: 0.95em; color: #34495e; font-weight: bold; transition: color 0.2s; }
+        .radio-group label:hover { color: #3498db; }
+        .radio-group input[type="radio"] { appearance: none; -webkit-appearance: none; width: 18px; height: 18px; border: 2px solid #7f8c8d; border-radius: 50%; display: grid; place-content: center; margin-right: 8px; flex-shrink: 0; cursor: pointer; }
+        .radio-group input[type="radio"]::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background-color: #3498db; transform: scale(0); transition: 120ms transform ease-in-out; }
+        .radio-group input[type="radio"]:checked { border-color: #3498db; }
+        .radio-group input[type="radio"]:checked::before { transform: scale(1); }
+        .radio-group input[type="radio"]:checked + span { color: #3498db; }
+        
+        .controls-wrapper { display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: space-evenly; }
+
+        .simple-info-text { margin-top: auto; padding-top: 10px; font-size: 1em; color: #2c3e50; border-top: 1px dashed #ccc; }
+        .simple-info-text span { font-weight: bold; color: #c0392b; font-family: monospace; font-size: 1.1em; }
+
+        /* SVG 電路圖區：稍微放大 max-height 以填補空白 */
+        .svg-container { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0; max-height: 250px; padding: 5px; }
+        svg { width: 100%; height: 100%; }
+
+        /* 版權聲明 */
+        footer { width: 100%; text-align: center; padding-top: 12px; color: #7f8c8d; font-size: 0.9em; flex-shrink: 0; }
+
+        /* RWD 規則：小螢幕時取消高度限制，改為向下捲動排列 */
+        @media screen and (max-width: 900px) {
+            body { height: auto; padding: 10px; }
+            .container { height: auto; max-height: none; }
+            .main-content { grid-template-columns: 1fr; }
+            .plot-container { min-height: 300px; }
+            .svg-container { max-height: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>濾波器電路與頻率響應模擬</h1>
+            <p>觀察不同電路結構對交流訊號頻率的選擇性</p>
+        </div>
+
+        <div class="main-content">
+            <div class="left-column">
+                <div class="panel plot-container">
+                    <h3>數據分析 (頻率響應曲線)</h3>
+                    <div class="canvas-wrapper">
+                        <canvas id="responseChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="panel input-panel">
+                    <h3 style="border-bottom-color: #3498db; color: #2980b9;">輸入訊號調整</h3>
+                    <div class="control-group" style="margin-bottom: 0;">
+                        <label style="color: #2980b9;">訊號頻率 f</label>
+                        <div class="slider-container">
+                            <input type="range" id="frequency-slider" class="slider" min="10" max="1000" step="1" value="318">
+                            <span id="freq-val" class="value-display">318 Hz</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-column">
+                <div class="view-panel">
+                    <h3>模擬電路圖</h3>
+                    <div class="svg-container" id="circuitDiagram">
+                        </div>
+                </div>
+
+                <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+                    <h3 style="margin-bottom: 12px;">電路參數控制面板</h3>
+                    
+                    <div class="controls-wrapper">
+                        <div class="radio-group-container">
+                            <div style="font-weight: bold; color: #34495e; margin-bottom: 10px; font-size: 0.95em;">選擇濾波器線路：</div>
+                            <div class="radio-group">
+                                <label><input type="radio" name="filterType" value="highpass" checked><span>高通濾波 (RC)</span></label>
+                                <label><input type="radio" name="filterType" value="lowpass"><span>低通濾波 (RC)</span></label>
+                                <label><input type="radio" name="filterType" value="bandpass"><span>帶通濾波 (RLC)</span></label>
+                                <label><input type="radio" name="filterType" value="bandstop"><span>帶阻濾波 (RLC)</span></label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="control-group">
+                                <label>電阻 R</label>
+                                <div class="slider-container">
+                                    <input type="range" id="resistor" class="slider" min="10" max="500" step="10" value="100">
+                                    <span id="r-val" class="value-display">100 Ω</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>電容 C</label>
+                                <div class="slider-container">
+                                    <input type="range" id="capacitor" class="slider" min="1" max="100" step="1" value="10">
+                                    <span id="c-val" class="value-display">10 μF</span>
+                                </div>
+                            </div>
+                            <!-- 使用 visibility 隱藏，保留空間佔位，確保上方元素不跳動 -->
+                            <div class="control-group" id="l-group" style="visibility: hidden;">
+                                <label>電感 L</label>
+                                <div class="slider-container">
+                                    <input type="range" id="inductor" class="slider" min="1" max="100" step="1" value="25">
+                                    <span id="l-val" class="value-display">25 mH</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="simple-info-text">
+                        <strong id="freq-type-label" style="display: inline-block; width: 85px;">特徵頻率:</strong> 
+                        <span id="characteristic-freq-val">-- Hz</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        Kiwiphysics © 2026 Kiwi的物理教室
+    </footer>
+
+    <script>
+        const svgs = {
+            highpass: `<svg viewBox="0 0 280 180" stroke="#2c3e50" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none">
+                <circle cx="40" cy="90" r="20" />
+                <path d="M 28 90 Q 34 80 40 90 T 52 90" stroke-width="2"/>
+                <polyline points="40,70 40,40 100,40" />
+                <polyline points="40,110 40,140 250,140" />
+                <line x1="100" y1="25" x2="100" y2="55" />
+                <line x1="120" y1="25" x2="120" y2="55" />
+                <polyline points="120,40 180,40 250,40" />
+                <polyline points="180,40 180,60 170,65 190,75 170,85 190,95 170,105 190,115 180,120 180,140" />
+                <circle cx="250" cy="40" r="4" fill="white" />
+                <circle cx="250" cy="140" r="4" fill="white" />
+                <text x="145" y="95" stroke="none" fill="#34495e" font-size="22">R</text>
+                <text x="105" y="20" stroke="none" fill="#34495e" font-size="22">C</text>
+            </svg>`,
+            lowpass: `<svg viewBox="0 0 280 180" stroke="#2c3e50" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none">
+                <circle cx="40" cy="90" r="20" />
+                <path d="M 28 90 Q 34 80 40 90 T 52 90" stroke-width="2"/>
+                <polyline points="40,70 40,40 80,40" />
+                <polyline points="40,110 40,140 250,140" />
+                <polyline points="80,40 85,30 95,50 105,30 115,50 125,30 135,50 140,40 250,40" />
+                <line x1="180" y1="40" x2="180" y2="80" />
+                <line x1="160" y1="80" x2="200" y2="80" />
+                <line x1="160" y1="100" x2="200" y2="100" />
+                <line x1="180" y1="100" x2="180" y2="140" />
+                <circle cx="250" cy="40" r="4" fill="white" />
+                <circle cx="250" cy="140" r="4" fill="white" />
+                <text x="105" y="25" stroke="none" fill="#34495e" font-size="22">R</text>
+                <text x="215" y="98" stroke="none" fill="#34495e" font-size="22">C</text>
+            </svg>`,
+            bandpass: `<svg viewBox="0 0 280 180" stroke="#2c3e50" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none">
+                <circle cx="40" cy="90" r="20" />
+                <path d="M 28 90 Q 34 80 40 90 T 52 90" stroke-width="2"/>
+                <polyline points="40,70 40,40 70,40" />
+                <polyline points="40,110 40,140 250,140" />
+                <path d="M 70 40 Q 75 25 80 40 Q 85 25 90 40 Q 95 25 100 40 Q 105 25 110 40" />
+                <polyline points="110,40 130,40" />
+                <line x1="130" y1="25" x2="130" y2="55" />
+                <line x1="150" y1="25" x2="150" y2="55" />
+                <polyline points="150,40 190,40 250,40" />
+                <polyline points="190,40 190,60 180,65 200,75 180,85 200,95 180,105 200,115 190,120 190,140" />
+                <circle cx="250" cy="40" r="4" fill="white" />
+                <circle cx="250" cy="140" r="4" fill="white" />
+                <text x="85" y="20" stroke="none" fill="#34495e" font-size="22">L</text>
+                <text x="135" y="20" stroke="none" fill="#34495e" font-size="22">C</text>
+                <text x="215" y="95" stroke="none" fill="#34495e" font-size="22">R</text>
+            </svg>`,
+            bandstop: `<svg viewBox="0 0 280 180" stroke="#2c3e50" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" fill="none">
+                <circle cx="40" cy="90" r="20" />
+                <path d="M 28 90 Q 34 80 40 90 T 52 90" stroke-width="2"/>
+                <polyline points="40,70 40,40 70,40" />
+                <polyline points="40,110 40,140 250,140" />
+                <polyline points="70,40 75,30 85,50 95,30 105,50 115,30 125,50 130,40 250,40" />
+                <line x1="180" y1="40" x2="180" y2="55" />
+                <line x1="160" y1="55" x2="200" y2="55" />
+                <line x1="160" y1="70" x2="200" y2="70" />
+                <line x1="180" y1="70" x2="180" y2="85" />
+                <path d="M 180 85 Q 195 90 180 95 Q 195 100 180 105 Q 195 110 180 115 Q 195 120 180 125" />
+                <line x1="180" y1="125" x2="180" y2="140" />
+                <circle cx="250" cy="40" r="4" fill="white" />
+                <circle cx="250" cy="140" r="4" fill="white" />
+                <text x="95" y="25" stroke="none" fill="#34495e" font-size="22">R</text>
+                <text x="215" y="70" stroke="none" fill="#34495e" font-size="22">C</text>
+                <text x="210" y="115" stroke="none" fill="#34495e" font-size="22">L</text>
+            </svg>`
+        };
+
+        const ui = {
+            radios: document.querySelectorAll('input[name="filterType"]'),
+            diagram: document.getElementById('circuitDiagram'),
+            r: document.getElementById('resistor'),
+            c: document.getElementById('capacitor'),
+            l: document.getElementById('inductor'),
+            f: document.getElementById('frequency-slider'),
+            rVal: document.getElementById('r-val'),
+            cVal: document.getElementById('c-val'),
+            lVal: document.getElementById('l-val'),
+            fVal: document.getElementById('freq-val'),
+            lGroup: document.getElementById('l-group'),
+            freqTypeLabel: document.getElementById('freq-type-label'),
+            charFreqVal: document.getElementById('characteristic-freq-val')
+        };
+        
+        const ctx = document.getElementById('responseChart').getContext('2d');
+        let chart;
+
+        function calculateVout(type, f, R, C_farad, L_henry) {
+            if (f <= 0) f = 0.001;
+            const w = 2 * Math.PI * f;
+            
+            const Z_R = R;
+            const Z_C_mag = 1 / (w * C_farad);
+            const Z_L_mag = w * L_henry;
+
+            if (type === 'lowpass') {
+                return Z_C_mag / Math.sqrt(Z_R*Z_R + Z_C_mag*Z_C_mag);
+            } else if (type === 'highpass') {
+                return Z_R / Math.sqrt(Z_R*Z_R + Z_C_mag*Z_C_mag);
+            } else if (type === 'bandpass') {
+                const X = Z_L_mag - Z_C_mag;
+                return Z_R / Math.sqrt(Z_R*Z_R + X*X);
+            } else if (type === 'bandstop') {
+                const X = Math.abs(Z_L_mag - Z_C_mag);
+                return X / Math.sqrt(Z_R*Z_R + X*X);
+            }
+            return 0;
+        }
+
+        function updateSimulation() {
+            const type = document.querySelector('input[name="filterType"]:checked').value;
+            const R = parseFloat(ui.r.value);
+            const C_uF = parseFloat(ui.c.value);
+            const L_mH = parseFloat(ui.l.value);
+            let currentF = parseFloat(ui.f.value);
+
+            ui.rVal.innerText = `${R} Ω`;
+            ui.cVal.innerText = `${C_uF} μF`;
+            ui.lVal.innerText = `${L_mH} mH`;
+            ui.fVal.innerText = `${currentF} Hz`;
+
+            ui.diagram.innerHTML = svgs[type];
+            if (type === 'highpass' || type === 'lowpass') {
+                ui.lGroup.style.visibility = 'hidden'; /* 使用 hidden 而不是 none */
+                ui.freqTypeLabel.innerText = '截止頻率:';
+            } else {
+                ui.lGroup.style.visibility = 'visible'; /* 顯示滑桿 */
+                ui.freqTypeLabel.innerText = '共振頻率:';
+            }
+
+            const C_farad = C_uF * 1e-6;
+            const L_henry = L_mH * 1e-3;
+
+            let f_center;
+            if (type === 'bandpass' || type === 'bandstop') {
+                f_center = 1 / (2 * Math.PI * Math.sqrt(L_henry * C_farad));
+            } else {
+                f_center = 1 / (2 * Math.PI * R * C_farad);
+            }
+            
+            ui.charFreqVal.innerText = `${f_center.toFixed(1)} Hz`;
+
+            const f_max = 1000; 
+            const step = f_max / 200;
+            
+            if(currentF > f_max) {
+                currentF = f_max;
+                ui.f.value = f_max;
+                ui.fVal.innerText = `${currentF} Hz`;
+            }
+
+            const curveData =[];
+            const pointData =[];
+
+            for (let f = 1; f <= f_max; f += step) {
+                curveData.push({ x: f, y: calculateVout(type, f, R, C_farad, L_henry) });
+            }
+
+            const currentAmp = calculateVout(type, currentF, R, C_farad, L_henry);
+            pointData.push({ x: currentF, y: currentAmp });
+
+            if (chart) {
+                chart.data.datasets[0].data = curveData;
+                chart.data.datasets[1].data = pointData;
+                chart.update('none'); 
+            } else {
+                Chart.defaults.font.size = 14;
+                
+                chart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets:[
+                            {
+                                label: '頻率響應曲線',
+                                data: curveData,
+                                borderColor: '#3498db',
+                                borderWidth: 3,
+                                showLine: true,
+                                pointRadius: 0, 
+                                tension: 0.2,
+                                order: 2
+                            },
+                            {
+                                label: '當前輸入狀態',
+                                data: pointData,
+                                backgroundColor: '#e74c3c',
+                                borderWidth: 0,
+                                pointRadius: 7,
+                                pointHoverRadius: 9,
+                                showLine: false,
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                title: { display: true, text: '頻率 f (Hz)', font: { size: 15, weight: 'bold' } },
+                                min: 0,
+                                max: f_max,
+                                grid: { color: '#e0e0e0' }
+                            },
+                            y: {
+                                title: { display: true, text: '電壓傳遞比 |V\u2092\u1D64\u209C / V\u1D62\u2099|', font: { size: 15, weight: 'bold' } },
+                                min: 0,
+                                max: 1.2,
+                                ticks: { stepSize: 0.2 },
+                                grid: { color: '#e0e0e0' }
+                            }
+                        },
+                        plugins: {
+                            legend: { position: 'top', labels: { font: { size: 14 } } },
+                            tooltip: {
+                                bodyFont: { size: 14 },
+                                titleFont: { size: 14 },
+                                callbacks: {
+                                    label: function(context) {
+                                        return `頻率: ${context.parsed.x.toFixed(0)} Hz, 比例: ${context.parsed.y.toFixed(3)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        ui.radios.forEach(radio => radio.addEventListener('change', updateSimulation));[ui.r, ui.c, ui.l].forEach(el => el.addEventListener('input', updateSimulation));
+        ui.f.addEventListener('input', updateSimulation);
+
+        updateSimulation();
+    </script>
+</body>
+</html>
