@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國中會考（數學）：高頻核心知識點全攻略</title>
+    
+    <!-- 穩定版 MathJax 3 渲染配置 -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+    <style>
+        body { font-family: "Segoe UI", "Microsoft JhengHei", sans-serif; line-height: 1.8; color: #333; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f4f5f7; }
+        
+        /* 頂部標題 */
+        .header-wrap { display: flex; justify-content: center; align-items: center; border-bottom: 3px solid #4a235a; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { text-align: center; color: #4a235a; margin: 0; padding: 0; border: none; font-size: 2em; font-weight: 800; }
+        
+        h2 { background-color: #4a235a; color: white; padding: 12px 20px; border-radius: 5px; margin-top: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 1.4em; }
+        
+        /* 取消 overflow: hidden，讓內容自然撐開外框，不再裁切底部 */
+        details { background: white; margin-bottom: 12px; padding: 12px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e1e8ed; transition: all 0.3s ease; display: block; }
+        
+        summary { font-size: 1.1em; font-weight: bold; cursor: pointer; color: #4a235a; outline: none; display: flex; align-items: center; list-style: none; }
+        summary::-webkit-details-marker { display: none; }
+        
+        summary::before { content: '▶'; display: inline-block; width: 4.5em; text-align: center; font-size: 0.8em; color: #4a235a; flex-shrink: 0; }
+        details[open] summary::before { content: '▼'; color: #4a235a; }
+        
+        .stars { color: #f39c12; font-size: 1em; margin-left: auto; white-space: nowrap; padding-left: 10px; letter-spacing: 1px; flex-shrink: 0; }
+        
+        .content { padding: 15px 20px 5px 20px; border-top: 1px solid #f0f0f0; margin-top: 12px; }
+        
+        .tag-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .tag { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: bold; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap; }
+        .tag-cap { background: #2874a6; } 
+        
+        .highlight-box { background: #fffde7; padding: 15px 20px; border: 2px solid #fbc02d; margin: 15px 0; border-radius: 12px; text-align: center; font-size: 1.15em; font-weight: bold; color: #c0392b; line-height: 1.6; }
+        .abstract-title { color: #c0392b; font-weight: bold; font-size: 1.15em; border-left: 6px solid #c0392b; padding-left: 15px; margin: 20px 0 10px 0; }
+        
+        .concept-text { background: #ffffff; padding: 5px 0; margin-bottom: 10px; }
+        .strategy-box { background: #f0f4f8; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid #d4e0eb; }
+
+        ol.custom-list { margin: 8px 0 0 0; padding-left: 1.5em; }
+        ol.custom-list li { margin-bottom: 8px; padding-left: 0.3em; }
+        ol.custom-list li::marker { font-weight: 600; color: #4a235a; }
+        ol.custom-list strong { color: #2874a6; }
+
+        /* 網頁版隱藏筆記區，僅在列印時顯示 */
+        .note-section { display: none; }
+
+        @media (max-width: 768px) {
+            summary { font-size: 1em; }
+            summary::before { width: 3.5em; }
+            .stars { font-size: 0.8em; }
+            h1 { font-size: 1.5em; }
+        }
+
+        /* ----- 列印專屬設定 ----- */
+        @media print {
+            body { background-color: #ffffff !important; margin: 0; padding: 0; }
+            
+            /* 隱藏網頁版專用的大片留白與網頁底部的版權宣告 */
+            .spacer, .web-footer { display: none !important; }
+            
+            /* 確保頂部大標題不被切斷 */
+            .header-wrap { border-bottom: 2px solid #000; margin-bottom: 15px; break-after: avoid; page-break-after: avoid; }
+            
+            /* 大單元標題自動換頁，並強制與下方的內容綁定，防止標題孤立在頁底 */
+            h2 { 
+                background-color: transparent !important; 
+                color: #000 !important; 
+                box-shadow: none !important; 
+                border-bottom: 2px solid #000 !important; 
+                padding-left: 0; 
+                margin-top: 30px;
+                margin-bottom: 15px;
+                break-before: page;
+                page-break-before: always; 
+                break-after: avoid !important;
+                page-break-after: avoid !important;
+            }
+            
+            /* 第一個大單元標題絕對不換頁 */
+            h2.first-section { 
+                break-before: avoid !important; 
+                page-break-before: avoid !important; 
+                margin-top: 10px; 
+            }
+            
+            /* 重點卡片樣式：不裁切，保證外框完美包覆筆記 */
+            details { 
+                display: block !important;
+                break-inside: avoid;
+                page-break-inside: avoid; 
+                box-shadow: none !important; 
+                border: 1px solid #000 !important; 
+                margin-bottom: 20px !important; 
+                padding: 15px !important;
+            }
+
+            /* 強制展開所有內容（即使瀏覽器JS失效也保證印出） */
+            details > * { display: block !important; }
+            summary::before { display: none !important; }
+            summary { pointer-events: none; padding-left: 0; }
+            .content { padding-left: 0; padding-right: 0; }
+
+            /* 列印時才顯示作圖筆記區 */
+            .note-section { 
+                display: flex !important; 
+                flex-direction: column;
+                margin-top: 15px; 
+                margin-bottom: 5px;
+                border: 1px solid #000 !important; 
+                border-radius: 8px; 
+                padding: 15px; 
+                background-color: #fff !important; 
+                break-inside: avoid; 
+                page-break-inside: avoid; 
+            }
+            .note-title { font-weight: bold; color: #555; margin-bottom: 10px; font-size: 0.95em; }
+            .note-content { display: flex; gap: 15px; align-items: stretch; }
+            .diagram-placeholder { width: 130px; height: 120px; background: #ffffff; border: 1px solid #999; border-radius: 6px; flex-shrink: 0; position: relative; }
+            .note-lines { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+            .note-lines .line { border-bottom: 1px dashed #999; height: 28px; }
+
+            /* 標準 CSS 頁碼與版權宣告（支援的軟體會自動生成頁碼） */
+            @page {
+                margin: 15mm;
+                @bottom-right { content: "第 " counter(page) " 頁"; font-size: 12px; color: #555; }
+                @bottom-left { content: "Kiwiphysics © 2026 會考數學全攻略"; font-size: 12px; color: #555; }
+            }
+        }
+    </style>
+
+    <script>
+        // 列印前自動將所有重點內容展開
+        window.addEventListener('beforeprint', () => {
+            document.querySelectorAll('details').forEach(d => d.open = true);
+        });
+    </script>
+</head>
+<body>
+
+    <div class="header-wrap">
+        <h1>國中會考（數學）：高頻考點全攻略</h1>
+    </div>
+
+    <!-- 可共用的 SVG 示意圖模板 -->
+    <svg style="display:none;">
+        <defs>
+            <g id="math-diagram">
+                <pattern id="grid" width="15" height="15" patternUnits="userSpaceOnUse">
+                    <path d="M 15 0 L 0 0 0 15" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+                </pattern>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                <circle cx="65" cy="60" r="30" fill="none" stroke="#cfd8dc" stroke-width="2"/>
+                <polygon points="65,30 39,75 91,75" fill="none" stroke="#b0bec5" stroke-width="2"/>
+                <line x1="10" y1="90" x2="120" y2="90" stroke="#90a4ae" stroke-width="2"/>
+                <line x1="15" y1="10" x2="15" y2="95" stroke="#90a4ae" stroke-width="2"/>
+                <path d="M 15 90 Q 40 20 80 15" fill="none" stroke="#90a4ae" stroke-width="1.5" stroke-dasharray="4"/>
+            </g>
+        </defs>
+    </svg>
+
+    <!-- ==================== 單元 1 ==================== -->
+    <h2 class="first-section">1. 數的運算與比例</h2>
+    
+    <details>
+        <summary>質因數分解與公因倍數 <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>標準分解式：</strong>將一個正整數寫成所有質數次方的乘積（如 $12 = 2^2 \times 3$）。這是求公因倍數的最強工具。</li>
+                    <li><strong>最大公因數 (GCD)：</strong>找共同底數，取「次數較小」者相乘。</li>
+                    <li><strong>最小公倍數 (LCM)：</strong>找所有出現過的底數，取「次數較大」者相乘。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>生活應用判斷：</strong>若題目是「切蛋糕、分裝、切長條」，通常是求**最大公因數**；若是「排班、同時發車、長方形拼正方形」，通常是求**最小公倍數**。</li>
+                    <li><strong>互質觀念：</strong>若兩數的最大公因數為 1，則稱兩數互質。此時兩數的最小公倍數直接等於兩數相乘。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">切分裝找最大公因數；排班重逢找最小公倍數</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>數線與正負數 (絕對值、距離) <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>正負數運算：</strong>熟記負負得正、正負得負的加減乘除規律。</li>
+                    <li><strong>絕對值的幾何意義：</strong>$|a|$ 代表數線上點 $a$ 到原點的距離；而 $|a-b|$ 則代表數線上點 $a$ 與點 $b$ 之間的「距離」。距離永遠不為負。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>距離平移法：</strong>遇到絕對值的相對位置題目，直接畫一條數線，利用「點之間的距離」來推估大小關係，比代數字更不容易出錯。</li>
+                    <li><strong>拆絕對值陷阱：</strong>如果 $x < 0$，拆開絕對值時必須加負號，即 $|x| = -x$。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">$|a-b|$ 在數線上代表 $a$ 與 $b$ 兩點的「距離」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>整數四則運算與指數律 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">112會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>運算順序：</strong>永遠先乘除後加減，有括號先算括號內。</li>
+                    <li><strong>指數律必背：</strong><br>
+                        (1) 同底數相乘：指數相加（$a^m \times a^n = a^{m+n}$）。<br>
+                        (2) 同底數相除：指數相減（$a^m \div a^n = a^{m-n}$）。<br>
+                        (3) 次方的次方：指數相乘（$(a^m)^n = a^{m \times n}$）。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>負號與括號陷阱：</strong>特別注意 $(-3)^2$（等於 $9$）與 $-3^2$（等於 $-9$）的差異。偶數次方會吃掉括號內的負號。</li>
+                    <li><strong>化簡技巧：</strong>遇到不同底數時，第一步永遠是「先將底數化成相同的質數」（如將 $4$ 換成 $2^2$），再套用指數律。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">指數律運算第一步：將底數化成「相同的質數」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>分數的四則運算 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>加減法：</strong>必須先找分母的最小公倍數進行「通分」，再將分子相加減。</li>
+                    <li><strong>乘除法：</strong>乘法可直接分子乘分子、分母乘分母；除法則是「乘以倒數」。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>帶分數陷阱：</strong>進行乘除運算前，一定要先把所有的帶分數化為「假分數」，否則必算錯。</li>
+                    <li><strong>混合題型：</strong>遇到複雜式子，先處理絕對值與次方的正負號，再按先乘除後加減的順序穩穩計算。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">分數乘除前，必定要先化為「假分數」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>科學記號與大小比較 <span class="stars">★★☆☆☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>標準形式：</strong>將數字轉換為 $a \times 10^n$ 的形式，其中 $a$ 必須滿足 $1 \le a < 10$，$n$ 為整數。</li>
+                    <li><strong>正負次方意義：</strong>$n > 0$ 代表極大的數字（原數有 $n+1$ 位數）；$n < 0$ 代表極小的純小數（小數點後第 $|n|$ 位開始出現不為零的數字）。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>比較大小：</strong>先比 $10$ 的次方數 $n$，次方數越大的值越大；若次方數相同，再比較前面的數字 $a$。</li>
+                    <li><strong>科學記號加減：</strong>必須先將 $10$ 的次方數「化為相同（通常化成較大的次方）」，再提出公因式相加減。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">科學記號加減法，必定先將「次方數化為一樣」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>比例式與正反比 <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>比例式解法：</strong>若 $a : b = c : d$，則必定滿足「內項乘積等於外項乘積」，即 $b \times c = a \times d$。</li>
+                    <li><strong>正比：</strong>兩個量同增同減，比值固定（$y = kx$）。圖形為通過原點的直線。</li>
+                    <li><strong>反比：</strong>兩個量一增一減，乘積固定（$x \times y = k$）。圖形為平滑的雙曲線。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>假設比例常數：</strong>已知 $A : B = 3 : 5$，絕對不要當作 $A=3, B=5$，一定要假設實際數量為 $A = 3r$, $B = 5r$ ($r \neq 0$)，再代入其他條件求解。</li>
+                    <li><strong>生活情境：</strong>常見考題如齒輪轉動（齒數與轉數成反比）、濃度問題（溶質與溶液質量成正比）。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">已知比例 $A:B = 3:5$，必假設 $A=3r, B=5r$ 帶入計算</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- ==================== 單元 2 ==================== -->
+    <h2>2. 方程式與不等式</h2>
+
+    <details>
+        <summary>一元一次方程式與應用 <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>基本概念：</strong>將生活中的文字描述（如折扣、年齡），利用等號翻譯成含有一個未知數 $x$ 的數學等式。</li>
+                    <li><strong>等量公理：</strong>等式兩邊同時加減乘除同一個數（除數不為 0），等式依然成立。利用移項法則解出未知數。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>假設技巧：</strong>通常直接假設「題目最後問的那個量」為 $x$；若有兩個未知量，則假設「基準量（比較小的那個）」為 $x$。</li>
+                    <li><strong>驗算習慣：</strong>算出來的 $x$ 務必代回原題目情境中，檢查是否符合常理（例如人數或年齡不可能是負數或分數）。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">應用題第一步：大膽假設「所求」或「基準量」為 $x$</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>二元一次聯立方程式與應用 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>聯立意義：</strong>當題目有「兩種未知量」時，必須假設 $x$ 與 $y$，並根據題意列出「兩個獨立的方程式」才能求解。</li>
+                    <li><strong>解法工具：</strong>熟練使用「代入消去法」或「加減消去法」來消滅其中一個未知數。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>圖形意義：</strong>二元一次方程式代表一條直線。聯立方程式的「解 ($x,y$)」，就是這兩條直線在坐標平面上的「交點坐標」。</li>
+                    <li><strong>無解與無限多解：</strong>若兩線平行則聯立方程式「無解」；若兩線重合則「無限多組解」。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">聯立方程式的解，就是兩條直線的「交點坐標」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>一元一次不等式 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>關鍵字轉譯：</strong>「至少」、「不低於」代表 ($\ge$)；「超過」代表 ($>$)；「至多」、「不超過」代表 ($\le$)。</li>
+                    <li><strong>解法規則：</strong>解不等式的方法與方程式幾乎完全相同（移項加減不變），只有一個致命的例外！</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>變號鐵律：</strong>當不等式兩邊「同時乘或除以一個負數」時，不等號的方向必須**立刻反轉**（$>$ 變 $<$，$\le$ 變 $\ge$）。</li>
+                    <li><strong>數線圖示：</strong>包含等號（$\ge, \le$）畫實心圓點；不含等號畫空心圓點。常考情境為優惠門檻計算或容許範圍。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">不等式同乘除「負數」，不等號方向必定反轉</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- ==================== 單元 3 ==================== -->
+    <h2>3. 多項式與數列</h2>
+
+    <details>
+        <summary>乘法公式與多項式四則 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>多項式直式除法：</strong>用於計算多項式相除求商式與餘式。計算過程中一定要注意「降冪排列」與「缺項補零」。</li>
+                    <li><strong>必背乘法公式：</strong><br>
+                        和的平方：$(a+b)^2 = a^2 + 2ab + b^2$<br>
+                        差的平方：$(a-b)^2 = a^2 - 2ab + b^2$<br>
+                        平方差公式：$(a+b)(a-b) = a^2 - b^2$</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>大數值速算：</strong>遇到看似不可能硬算的數字（如 $999^2$ 或 $106^2 - 4^2$），必定是考乘法公式。將 $999$ 拆為 $(1000-1)^2$ 套用差的平方公式。</li>
+                    <li><strong>平方差最常考：</strong>看到「兩個平方相減」，立刻條件反射寫成 $(a+b)(a-b)$ 進行化簡。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">平方差公式：$a^2 - b^2 = (a+b)(a-b)$，大數速算必備</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>因式分解 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>定義：</strong>將多項式化為幾個較低次數多項式「相乘」的形式。</li>
+                    <li><strong>核心步驟一：</strong>第一步永遠先檢查有沒有「公因式」，有就立刻提出來。</li>
+                    <li><strong>核心步驟二：</strong>針對剩下的二次多項式，搭配「十字交乘法」或「乘法公式」進行分解。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>十字交乘法：</strong>找兩個數，使它們「相乘等於常數項」，且「相加等於一次項係數」。</li>
+                    <li><strong>完全平方式檢驗：</strong>若頭尾都是完全平方，先懷疑是不是 $(x \pm y)^2$，再檢查中間項 $2ab$。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">因式分解第一步：永遠先檢查有沒有「公因式」可提</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>一元二次方程式與公式解 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">112會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>解法順序：</strong>優先考慮「十字交乘法」分解為 $(px+q)(rx+s)=0$，進而得出兩根。</li>
+                    <li><strong>無敵公式解：</strong>當無法因式分解時，直接代入公式解：$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>判別式法：</strong>判別式 $D = b^2 - 4ac$。<br>
+                        若 $D > 0$，方程式有「兩相異實根」。<br>
+                        若 $D = 0$，方程式有「兩相等實根（重根）」。<br>
+                        若 $D < 0$，方程式「無解」。</li>
+                    <li><strong>代入檢驗：</strong>若已知 $x=3$ 是方程式的一根，立刻把 $3$ 代入 $x$ 的位置，能求出未知的係數。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">判別式 $b^2 - 4ac$：決定方程式有幾個解</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>等差數列與級數 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>公差定義：</strong>數列中相鄰兩項的差為固定常數，稱為公差 $d$。</li>
+                    <li><strong>第 $n$ 項公式：</strong>$a_n = a_1 + (n-1)d$。</li>
+                    <li><strong>級數和公式：</strong>前 $n$ 項總和 $S_n = \frac{n(a_1 + a_n)}{2}$。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>圖形規律題：</strong>會考極愛出圖形疊加。不要自己硬算，直接寫出前三項數字，找出「首項」與「公差」，套公式秒殺。</li>
+                    <li><strong>中項性質：</strong>若 $a, b, c$ 成等差數列，則中間項 $b = (a+c)/2$。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">找圖形規律：寫出前三項，找首項與公差，套公式</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- ==================== 單元 4 ==================== -->
+    <h2>4. 坐標平面與函數</h2>
+
+    <details>
+        <summary>直角坐標平面 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">112會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>象限符號：</strong>一 $(+, +)$、二 $(-, +)$、三 $(-, -)$、四 $(+, -)$。</li>
+                    <li><strong>點到軸的距離：</strong>點 $(x, y)$ 到 $x$ 軸的距離為 $|y|$；到 $y$ 軸的距離為 $|x|$。</li>
+                    <li><strong>平移規則：</strong>向右 $x$ 加，向左減；向上 $y$ 加，向下減。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>中點坐標：</strong>端點 $(x_1, y_1)$ 與 $(x_2, y_2)$，中點為 $\left(\frac{x_1+x_2}{2}, \frac{y_1+y_2}{2}\right)$。</li>
+                    <li><strong>畫圖破題：</strong>遇到任何坐標或平移的題目，不要憑空想像，直接畫十字軸標上位置，答案一目了然。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">點到 $x$ 軸的距離看 $y$ 坐標的絕對值，反之亦然</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>線型函數與圖形 <span class="stars">★★★☆☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">112會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>線型函數圖形：</strong>一次函數 $y = ax + b$ ($a \neq 0$)，圖形為一斜直線。常數函數 $y = b$ ($a=0$)，圖形為水平直線。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>圖形傾斜：</strong>看係數 $a$。$a > 0$ 右上傾斜；$a < 0$ 右下傾斜。</li>
+                    <li><strong>求函數式：</strong>只要題目給定直線上任意兩個點的坐標，直接代入 $y = ax + b$ 解聯立方程式即可求出。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">求直線方程式：代入兩點坐標解 $y = ax + b$ 聯立</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>二次函數 (頂點與平移) <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>標準式：</strong>配方成 $y = a(x-h)^2 + k$，拋物線頂點坐標必為 $(h, k)$，對稱軸為 $x=h$。</li>
+                    <li><strong>開口判斷：</strong>看 $a$。若 $a > 0$，開口向上（有最小值）；若 $a < 0$，開口向下（有最大值）。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>平移口訣：</strong>二次函數圖形的平移，其實就是「頂點的平移」。掌握「右減左加、上加下減」原則。</li>
+                    <li><strong>對稱性應用：</strong>拋物線具有左右對稱性。若已知拋物線上高度相同的兩點，其中點必定落在對稱軸上。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">二次函數的平移，就是「頂點坐標」的平移</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- ==================== 單元 5 ==================== -->
+    <h2>5. 幾何基礎與圖形</h2>
+
+    <details>
+        <summary>平方根與畢氏定理 <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>平方根意義：</strong>符號 $\sqrt{a}$ 代表的是「正的平方根」。</li>
+                    <li><strong>畢氏定理：</strong>在任何直角三角形中，$a^2 + b^2 = c^2$。斜邊必定是最長邊。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>整數範圍推估：</strong>利用鄰近完全平方數推估無理數。例如 $\sqrt{25} < \sqrt{30} < \sqrt{36}$。</li>
+                    <li><strong>必背直角三角形比例：</strong>熟記 $3:4:5$、$5:12:13$、$8:15:17$、$7:24:25$ 快速省去計算。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">直角三角形必背：$3:4:5$、$5:12:13$、$8:15:17$</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>平面圖形與線對稱(尺規作圖) <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>中垂線作圖痕跡：</strong>以兩端點為圓心畫弧交點。中垂線上的任一點，到線段「兩端點」等距離。</li>
+                    <li><strong>角平分線作圖痕跡：</strong>角平分線上的任一點，到該角的「兩邊」等距離。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>判斷痕跡目的：</strong>看到「兩交點的連線垂直穿過底邊」，就是作中垂線；看到「將角切半」，就是作角平分線。</li>
+                    <li><strong>摺紙題型：</strong>摺紙的「摺線」本身就是「對稱軸」。摺過去的角度與邊長會跟原來一模一樣。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">中垂線到「兩端點」等距；角平分線到「兩邊」等距</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>三角形內外角與全等性質 <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>內外角定理：</strong>三角形內角和恆為 $180^\circ$。任一「外角」等於其「兩個內對角」的和。</li>
+                    <li><strong>全等性質：</strong>符合 SSS、SAS、ASA、AAS 或 RHS，則兩三角形全等（形狀大小完全相同）。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>證明順序：</strong>遇到證明兩線段長度相等，標準起手式是先尋找包含這兩線段的兩個三角形，證明它們「全等」。</li>
+                    <li><strong>大邊對大角：</strong>在同一個三角形中，角度越大的角，對應的邊長就越長。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">證明長度或角度相等：先想辦法證明「三角形全等」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>平行線與四邊形 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>平行線截角：</strong>被截線穿過時，「同位角相等」、「內錯角相等」、「同旁內角互補（相加 $180^\circ$）」。</li>
+                    <li><strong>特殊四邊形：</strong>平行四邊形對角線互相平分；矩形對角線等長；菱形對角線互相垂直。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>拐點畫平行：</strong>遇到平行線間有曲折閃電形狀的角度題，秘訣是在每個轉折處「畫出一條平行輔助線」。</li>
+                    <li><strong>菱形畢氏定理：</strong>菱形求邊長時，必定利用互相垂直的對角線套用畢氏定理。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">平行線間有轉折角，直接在轉折處畫「平行輔助線」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- ==================== 單元 6 ==================== -->
+    <h2>6. 相似形與圓</h2>
+
+    <details>
+        <summary>比例線段與相似三角形 <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>相似定義：</strong>兩個三角形形狀相同。最常考 AA 相似（兩個內角對應相等即相似）。</li>
+                    <li><strong>平行截比例：</strong>三角形中平行於底邊的線，會將兩腰截出成比例的線段。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>尋找隱藏角：</strong>常利用「對頂角相等」、「平行線的內錯角」湊齊 AA 相似條件。</li>
+                    <li><strong>面積比：</strong>若兩三角形相似且邊長比為 $a:b$，則其「面積比」必定為 $a^2 : b^2$。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">看到平行線，準備用「AA相似」或「比例線段」解長度</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>圓的性質 (圓周角、切線) <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>角度定理：</strong>「圓心角」等於弧度；「圓周角」等於所對弧度的一半。半圓上的圓周角必為 $90^\circ$。</li>
+                    <li><strong>切線性質：</strong>圓的切線與過切點的半徑，必定互相「垂直」。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>連半徑構造直角：</strong>遇到切線或弦心距，解題第一步永遠是「把圓心連到切點或弦的端點」，創造出直角套用畢氏定理。</li>
+                    <li><strong>內接四邊形：</strong>若四邊形四個頂點都在同一個圓上，則其「對角互補」。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">遇到切線或弦心距，連出半徑構造「直角三角形」套畢氏</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>三角形的三心 (外心/內心/重心) <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>外心：</strong>外接圓圓心，到三角形的「三個頂點等距離」。直角三角形的外心必在斜邊中點。</li>
+                    <li><strong>內心：</strong>內切圓圓心，到三角形的「三邊等距離」。</li>
+                    <li><strong>重心：</strong>三條中線交點，重心到頂點與對邊中點的比例為 $2:1$。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>外心求角度：</strong>因為外心連向頂點都是半徑，會形成三個等腰三角形，利用底角相等推算。</li>
+                    <li><strong>重心求面積：</strong>只要題目提到重心，八成與「面積平分」或「$2:1$ 線段比例」有關。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">外心到三頂點等距；內心到三邊等距；重心切割 $2:1$</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>立體圖形與三視圖 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>三視圖定義：</strong>從前、上、右觀察，將立體投影成平面視圖。</li>
+                    <li><strong>柱體公式：</strong>體積 ＝ 底面積 $\times$ 柱高；表面積 ＝ 兩底面積 ＋ 側面積。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>還原積木：</strong>先從「上視圖」畫出底盤，利用前視圖與右視圖在底盤填入數字。</li>
+                    <li><strong>視圖不見凹陷：</strong>三視圖只能呈現「最外層輪廓」，無法呈現深淺凹陷。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">柱體體積 ＝ 底面積 $\times$ 柱高，不論底面形狀為何</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- ==================== 單元 7 ==================== -->
+    <h2>7. 統計與機率</h2>
+
+    <details>
+        <summary>機率 <span class="stars">★★★★★</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">112會考</span>
+                <span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>機率定義：</strong>某一事件發生的機率 ＝ 該事件符合條件的次數 ÷ 所有可能發生的總次數。機率值永遠介於 $0$ 到 $1$ 之間。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>樹狀圖破解法：</strong>抽球或投幣，不用死記公式，直接畫出「樹狀圖」窮舉所有可能，最穩最不會錯。</li>
+                    <li><strong>放回陷阱：</strong>審題務必看清「抽出後是否放回」！不放回總數會減 1。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">抽球或擲骰子，直接畫「樹狀圖」窮舉最穩當</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <details>
+        <summary>統計圖表與數據分析 <span class="stars">★★★★☆</span></summary>
+        <div class="content">
+            <div class="tag-container">
+                <span class="tag tag-cap">114會考</span><span class="tag tag-cap">113會考</span><span class="tag tag-cap">111會考</span><span class="tag tag-cap">110會考</span><span class="tag tag-cap">109會考</span>
+            </div>
+            <div class="abstract-title">核心概念複習</div>
+            <div class="concept-text">
+                <ol class="custom-list">
+                    <li><strong>平均數：</strong>所有資料總和除以總個數。極易受極端值影響。</li>
+                    <li><strong>中位數：</strong>將數據「由小到大排列」後，最中間的那一個數。能較客觀呈現資料一般水準。</li>
+                    <li><strong>眾數：</strong>資料中出現次數最多的數值。</li>
+                </ol>
+            </div>
+            <div class="strategy-box">
+                <strong>解題策略：</strong>
+                <ol class="custom-list">
+                    <li><strong>直方圖找中位數：</strong>算出中位數落在哪一筆後，從最左邊開始把每組人數累加，直到跨過目標筆數。</li>
+                    <li><strong>盒狀圖判讀：</strong>掌握每一個區間都包含了大約 $25\%$ 的資料量。</li>
+                </ol>
+            </div>
+            <div class="highlight-box">找中位數第一步：資料必須先「由小到大排列」</div>
+            <div class="note-section">
+                <div class="note-title">✏️ 同學筆記與作圖區</div>
+                <div class="note-content">
+                    <div class="diagram-placeholder"><svg width="100%" height="100%"><use href="#math-diagram"/></svg></div>
+                    <div class="note-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- 網頁專用版權宣告 (加入 web-footer 類別，列印時會自動隱藏) -->
+    <div style="height: 100px;" class="spacer"></div>
+    <p class="web-footer" style="text-align: center; color: #7f8c8d; font-size: 0.9em; border-top: 1px solid #ccc; padding-top: 20px;">
+        Kiwiphysics © 2026 會考數學全攻略
+    </p>
+
+</body>
+</html>
